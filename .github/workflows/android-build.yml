@@ -58,12 +58,11 @@ jobs:
           # Accept licenses manually instead of using `yes |`
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
           
-          # Install platform-tools and build-tools with aidl support
+          # Install platform-tools and build-tools (aidl is included in build-tools)
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-30" \
-            "build-tools;30.0.3" \
-            "build-tools;30.0.3/aidl"
+            "build-tools;30.0.3"
 
       - name: Install Python dependencies
         run: |
