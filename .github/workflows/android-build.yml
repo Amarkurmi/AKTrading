@@ -42,51 +42,23 @@ jobs:
 
       - name: Install Android SDK and Build Tools
         run: |
-          export ANDROID_SDK_ROOT=$HOME/android-sdk
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-          
-          # Download and unzip SDK command-line tools
+          mkdir -p $HOME/android-sdk/cmdline-tools
+
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools
-          mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+          unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools
+          mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
 
-          # Set environment variables for Android SDK
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
-          echo "$ANDROID_SDK_ROOT/build-tools" >> $GITHUB_PATH
+          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/build-tools" >> $GITHUB_PATH
 
-          # Accept licenses automatically
-          echo "Accepting SDK licenses automatically..."
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --update
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
-          # Install platform-tools, build-tools, and required SDK components
-          echo "Installing SDK components..."
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
-            --no_https \
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-30" \
-            "build-tools;30.0.3"  # Stable version for build-tools
-
-          # Install build-tools explicitly if not found
-          if [ ! -d "$ANDROID_SDK_ROOT/build-tools/30.0.3" ]; then
-            echo "❌ build-tools version 30.0.3 not found, trying to install explicitly..."
-            wget https://dl.google.com/android/repository/build-tools_r30-linux.zip -O build-tools.zip
-            unzip build-tools.zip -d $ANDROID_SDK_ROOT/build-tools
-          fi
-
-          # Ensure build-tools are installed and available
-          echo "Listing build-tools folder..."
-          ls -la $ANDROID_SDK_ROOT/build-tools || true
-
-          # Verify if AIDL exists in build-tools directory
-          if ! find $ANDROID_SDK_ROOT/build-tools -name "aidl" -print; then
-            echo "❌ AIDL not found in build-tools directory. Reinstalling build-tools..."
-            $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;29.0.3"  # Older stable version as a fallback
-          else
-            echo "✅ AIDL found in build-tools directory."
-          fi
+            "build-tools;30.0.3"
 
       - name: Install Python dependencies
         run: |
@@ -100,31 +72,27 @@ jobs:
             buildozer init
           fi
 
-      - name: Clean buildozer environment (force rebuild)
+      - name: Patch buildozer.spec with SDK and Build Tools versions
+        run: |
+          sed -i '/^android.sdk/d' buildozer.spec
+          sed -i '/^android.ndk/d' buildozer.spec
+          sed -i '/^android.build_tools_version/d' buildozer.spec
+          echo "android.sdk = 30" >> buildozer.spec
+          echo "android.ndk = 23b" >> buildozer.spec
+          echo "android.build_tools_version = 30.0.3" >> buildozer.spec
+
+      - name: Clean buildozer environment
         run: |
           rm -rf .buildozer
           rm -rf ~/.buildozer
-          buildozer android clean || true  # tolerate errors here
-
-      - name: Debugging - Check AIDL Installation
-        run: |
-          echo "Listing build-tools folder..."
-          ls -la $ANDROID_SDK_ROOT/build-tools || true
-
-          # Check if the aidl tool exists
-          if ! which aidl; then
-            echo "❌ AIDL NOT FOUND. Attempting to locate aidl..."
-            find $ANDROID_SDK_ROOT/build-tools -name "aidl" -print || true
-          else
-            echo "✅ AIDL found at $(which aidl)"
-          fi
+          buildozer android clean || true
 
       - name: Build APK
         run: |
           buildozer android debug
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4.6
+        uses: actions/upload-artifact@v3
         with:
           name: kivy-app-apk
           path: bin/*.apk
