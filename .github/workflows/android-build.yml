@@ -18,9 +18,10 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install system dependencies
+      - name: Install system dependencies (with retries)
         run: |
-          sudo apt update
+          sudo apt-get clean
+          sudo apt-get update -y || (sleep 30 && sudo apt-get update -y)
           sudo apt install -y \
             build-essential \
             ccache \
