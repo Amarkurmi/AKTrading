@@ -42,22 +42,17 @@ jobs:
 
       - name: Install Android SDK and Build Tools
         run: |
-          # Setup directories
           mkdir -p $HOME/android-sdk/cmdline-tools
-          
-          # Download command line tools
+
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools
           mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-          
-          # Set environment paths
+
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/emulator" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/build-tools/30.0.3" >> $GITHUB_PATH
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          
-          # Install SDK packages
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/build-tools/30.0.3" >> $GITHUB_PATH
+
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
@@ -76,12 +71,20 @@ jobs:
             buildozer init
           fi
 
-      - name: Build APK with Buildozer (same shell where aidl is in PATH)
+      - name: Clean buildozer environment (force rebuild)
         run: |
-          echo "Verifying aidl..."
-          which aidl || (echo "AIDL NOT FOUND" && exit 1)
+          rm -rf .buildozer
+          rm -rf ~/.buildozer
+          buildozer android clean || true  # tolerate errors here
+
+      - name: Verify AIDL is available
+        run: |
+          echo "Checking aidl..."
+          which aidl || (echo "❌ aidl not found!" && exit 1)
           ls -la $(which aidl)
-          buildozer android clean
+
+      - name: Build APK
+        run: |
           buildozer android debug
 
       - name: Upload APK artifact
