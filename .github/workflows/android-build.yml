@@ -54,9 +54,9 @@ jobs:
           # List the extracted files to ensure sdkmanager exists
           ls -l $HOME/android-sdk/cmdline-tools/latest
           
-          # Add the sdkmanager to the PATH
-          export PATH=$PATH:$HOME/android-sdk/cmdline-tools/latest/bin
-          echo "export PATH=$PATH:$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
+          # Add sdkmanager to the PATH in the current shell
+          echo "export PATH=\$PATH:$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
+          source $GITHUB_ENV
 
       - name: Verify SDK Manager Path and Files
         run: |
@@ -69,6 +69,7 @@ jobs:
 
       - name: Accept Android SDK licenses
         run: |
+          # Accept licenses by running sdkmanager
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
       - name: Install Android SDK components (AIDL and Build Tools)
