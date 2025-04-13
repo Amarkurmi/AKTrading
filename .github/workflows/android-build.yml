@@ -63,12 +63,14 @@ jobs:
             "platform-tools" \
             "platforms;android-30"
 
-          echo "Checking AIDL availability..."
-          ls -l $HOME/android-sdk/build-tools/30.0.3/aidl || echo "AIDL not found!"
-
-      - name: Add Build Tools to PATH
+      - name: Add Build Tools to PATH and Verify AIDL
         run: |
           echo "PATH=$HOME/android-sdk/build-tools/30.0.3:$PATH" >> $GITHUB_ENV
+          export PATH=$HOME/android-sdk/build-tools/30.0.3:$PATH
+
+          echo "Verifying AIDL..."
+          which aidl || echo "AIDL not found in PATH!"
+          ls -l $HOME/android-sdk/build-tools/30.0.3/aidl || echo "AIDL binary missing!"
 
       - name: Install Python dependencies
         run: |
