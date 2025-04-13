@@ -1,8 +1,9 @@
-name: CI
+name: Android Build
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -10,7 +11,7 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
 
       - name: 🕒 Get Date
         id: get-date
@@ -18,13 +19,13 @@ jobs:
           echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
 
       - name: 🧠 Cache Buildozer global directory
-        uses: actions/cache@v3
+        uses: actions/cache@v2
         with:
           path: .buildozer_global
           key: buildozer-global-${{ hashFiles('buildozer.spec') }}
 
       - name: 🧠 Cache .buildozer
-        uses: actions/cache@v3
+        uses: actions/cache@v2
         with:
           path: .buildozer
           key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
@@ -37,7 +38,7 @@ jobs:
           buildozer_version: stable
 
       - name: 📦 Upload APK artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: app-release
           path: ${{ steps.buildozer.outputs.filename }}
