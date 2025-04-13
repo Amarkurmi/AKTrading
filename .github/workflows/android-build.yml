@@ -58,7 +58,7 @@ jobs:
           # Accept licenses manually instead of using `yes |`
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
           
-          # Install platform-tools and build-tools (aidl is included in build-tools)
+          # Install platform-tools and build-tools
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-30" \
@@ -82,15 +82,18 @@ jobs:
           rm -rf ~/.buildozer
           buildozer android clean || true  # tolerate errors here
 
-      - name: Verify AIDL Availability
+      - name: Debugging - Check AIDL Installation
         run: |
-          echo "Checking AIDL availability..."
+          echo "Listing build-tools folder..."
+          ls -la $HOME/android-sdk/build-tools/30.0.3
+
+          # Check if the aidl tool exists
           if ! which aidl; then
-            echo "❌ AIDL NOT FOUND. Ensuring proper build-tools installation."
-            exit 1
+            echo "❌ AIDL NOT FOUND. Attempting to locate aidl..."
+            find $HOME/android-sdk/build-tools/30.0.3 -name "aidl" -print || true
+          else
+            echo "✅ AIDL found at $(which aidl)"
           fi
-          echo "AIDL found at: $(which aidl)"
-          ls -la $(which aidl)  # List the `aidl` binary location for debugging
 
       - name: Build APK
         run: |
