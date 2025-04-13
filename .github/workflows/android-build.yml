@@ -36,7 +36,10 @@ jobs:
             automake \
             unzip \
             zip \
-            openjdk-17-jdk
+            openjdk-17-jdk \
+            curl \
+            wget \
+            android-sdk
 
       - name: Install Python dependencies
         run: |
@@ -49,6 +52,11 @@ jobs:
           if [ ! -f buildozer.spec ]; then
             buildozer init
           fi
+
+      - name: Install Android SDK tools (including AIDL)
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "build-tools;30.0.3" "platform-tools" "platforms;android-30"
 
       - name: Force Rebuild python-for-android (p4a)
         run: |
