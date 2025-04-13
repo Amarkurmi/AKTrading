@@ -38,8 +38,25 @@ jobs:
             zip \
             openjdk-17-jdk \
             curl \
-            wget \
-            android-sdk
+            wget
+
+      - name: Install Android SDK Command-Line Tools
+        run: |
+          # Download the command-line tools package
+          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
+          # Unzip the downloaded package
+          unzip commandlinetools-linux-7583922_latest.zip -d $HOME/android-sdk
+          # Add the sdkmanager to the PATH
+          export PATH=$PATH:$HOME/android-sdk/cmdline-tools/bin
+          echo "export PATH=$PATH:$HOME/android-sdk/cmdline-tools/bin" >> $GITHUB_ENV
+
+      - name: Accept Android SDK licenses
+        run: |
+          yes | $HOME/android-sdk/cmdline-tools/bin/sdkmanager --licenses
+
+      - name: Install Android SDK components (AIDL and Build Tools)
+        run: |
+          $HOME/android-sdk/cmdline-tools/bin/sdkmanager "build-tools;30.0.3" "platform-tools" "platforms;android-30"
 
       - name: Install Python dependencies
         run: |
@@ -52,11 +69,6 @@ jobs:
           if [ ! -f buildozer.spec ]; then
             buildozer init
           fi
-
-      - name: Install Android SDK tools (including AIDL)
-        run: |
-          yes | sdkmanager --licenses
-          sdkmanager "build-tools;30.0.3" "platform-tools" "platforms;android-30"
 
       - name: Force Rebuild python-for-android (p4a)
         run: |
