@@ -51,19 +51,24 @@ jobs:
           # Unzip the downloaded package into the latest folder
           unzip commandlinetools-linux-7583922_latest.zip -d $HOME/android-sdk/cmdline-tools/
           
-          # List the extracted files to ensure sdkmanager exists
-          ls -l $HOME/android-sdk/cmdline-tools/latest/bin
+          # Print the extracted content to confirm sdkmanager exists
+          echo "Contents of cmdline-tools directory:"
+          ls -l $HOME/android-sdk/cmdline-tools/
           
+          # Ensure that the latest directory contains bin folder
+          echo "Contents of latest folder:"
+          ls -l $HOME/android-sdk/cmdline-tools/latest
+
+          # List the bin directory specifically to check if sdkmanager exists
+          echo "Contents of latest/bin folder:"
+          ls -l $HOME/android-sdk/cmdline-tools/latest/bin
+
           # Add sdkmanager to the PATH in the current shell
           echo "export PATH=\$PATH:$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
           source $GITHUB_ENV
 
       - name: Verify SDK Manager Path and Files
         run: |
-          # Explicitly check if sdkmanager exists in the expected directory
-          echo "Checking if sdkmanager exists at this path:"
-          ls -l $HOME/android-sdk/cmdline-tools/latest/bin
-          
           # Check if sdkmanager is available in the path
           echo "PATH: $PATH"
           which sdkmanager || echo "sdkmanager not found"
@@ -100,7 +105,7 @@ jobs:
           buildozer android debug
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4.6
+        uses: actions/upload-artifact@v34.6
         with:
           name: kivy-app-apk
           path: bin/*.apk
