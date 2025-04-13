@@ -49,26 +49,26 @@ jobs:
           wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
           
           # Unzip the downloaded package into the latest folder
-          unzip commandlinetools-linux-7583922_latest.zip -d $HOME/android-sdk/cmdline-tools/latest
+          unzip commandlinetools-linux-7583922_latest.zip -d $HOME/android-sdk/cmdline-tools/
           
-          # Check the contents of the extracted directory to ensure sdkmanager exists
+          # List the extracted files to ensure sdkmanager exists
           ls -l $HOME/android-sdk/cmdline-tools/latest
-
+          
           # Add the sdkmanager to the PATH
           export PATH=$PATH:$HOME/android-sdk/cmdline-tools/latest/bin
           echo "export PATH=$PATH:$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
 
-      - name: Verify SDK Manager Path
+      - name: Verify SDK Manager Path and Files
         run: |
-          # Print the path to verify if sdkmanager is where it's expected
+          # Check if sdkmanager is in the PATH
           echo "PATH: $PATH"
           which sdkmanager
-          # List files in the bin directory to confirm sdkmanager is there
+          
+          # List contents of the bin directory where sdkmanager should be
           ls -l $HOME/android-sdk/cmdline-tools/latest/bin
 
       - name: Accept Android SDK licenses
         run: |
-          # Run sdkmanager to accept licenses
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
       - name: Install Android SDK components (AIDL and Build Tools)
