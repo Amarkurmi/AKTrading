@@ -18,15 +18,13 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install system dependencies (with retries)
+      - name: Install system dependencies
         run: |
-          sudo apt-get clean
-          sudo apt-get update -y || (sleep 30 && sudo apt-get update -y)
-          sudo apt install -y \
+          sudo apt-get update -y
+          sudo apt-get install -y \
             build-essential \
             ccache \
             git \
-            libncurses5 \
             libffi-dev \
             libssl-dev \
             libsqlite3-dev \
@@ -39,8 +37,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install Cython
-          pip install buildozer
+          pip install Cython buildozer
 
       - name: Initialize buildozer (if missing)
         run: |
@@ -55,5 +52,5 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4.6
         with:
-          name: my-kivy-app-apk
+          name: kivy-app-apk
           path: bin/*.apk
