@@ -58,11 +58,12 @@ jobs:
           # Accept licenses
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
           
-          # Install the required build tools and platform version
+          # Install platform-tools and build-tools with aidl support
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-30" \
-            "build-tools;30.0.3"
+            "build-tools;30.0.3" \
+            "build-tools;30.0.3/aidl"
 
       - name: Install Python dependencies
         run: |
@@ -86,7 +87,7 @@ jobs:
         run: |
           echo "Checking AIDL availability..."
           if ! which aidl; then
-            echo "❌ AIDL NOT FOUND. Ensure the correct build-tools are installed."
+            echo "❌ AIDL NOT FOUND. Ensuring proper build-tools installation."
             exit 1
           fi
           echo "AIDL found at: $(which aidl)"
