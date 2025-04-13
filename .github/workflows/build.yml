@@ -11,21 +11,20 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: 🕒 Get Date
         id: get-date
-        run: |
-          echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
+        run: echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
 
       - name: 🧠 Cache Buildozer global directory
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: .buildozer_global
           key: buildozer-global-${{ hashFiles('buildozer.spec') }}
 
       - name: 🧠 Cache .buildozer
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: .buildozer
           key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
@@ -37,8 +36,11 @@ jobs:
           command: buildozer android debug
           buildozer_version: stable
 
+      - name: 🧪 Verify APK exists
+        run: ls -la bin/
+
       - name: 📦 Upload APK artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: app-release
           path: ${{ steps.buildozer.outputs.filename }}
