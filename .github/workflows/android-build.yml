@@ -92,7 +92,7 @@ jobs:
           buildozer android debug
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4.6
         with:
           name: kivy-app-apk
           path: bin/*.apk
