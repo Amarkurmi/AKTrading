@@ -42,26 +42,26 @@ jobs:
 
       - name: Install Android SDK Command-Line Tools
         run: |
-          # Create the necessary directory for the SDK tools
-          mkdir -p $HOME/android-sdk/cmdline-tools
+          # Create the necessary directory for sdkmanager
+          mkdir -p $HOME/android-sdk/cmdline-tools/latest
           
           # Download the command-line tools package
           wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
           
-          # Unzip the downloaded package directly into the 'cmdline-tools' directory
-          unzip commandlinetools-linux-7583922_latest.zip -d $HOME/android-sdk/cmdline-tools
+          # Unzip the downloaded package into the latest folder
+          unzip commandlinetools-linux-7583922_latest.zip -d $HOME/android-sdk/cmdline-tools/latest
           
           # Add the sdkmanager to the PATH
-          export PATH=$PATH:$HOME/android-sdk/cmdline-tools/bin
-          echo "export PATH=$PATH:$HOME/android-sdk/cmdline-tools/bin" >> $GITHUB_ENV
+          export PATH=$PATH:$HOME/android-sdk/cmdline-tools/latest/bin
+          echo "export PATH=$PATH:$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
 
       - name: Accept Android SDK licenses
         run: |
-          yes | $HOME/android-sdk/cmdline-tools/bin/sdkmanager --licenses
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
       - name: Install Android SDK components (AIDL and Build Tools)
         run: |
-          $HOME/android-sdk/cmdline-tools/bin/sdkmanager "build-tools;30.0.3" "platform-tools" "platforms;android-30"
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3" "platform-tools" "platforms;android-30"
 
       - name: Install Python dependencies
         run: |
@@ -86,7 +86,7 @@ jobs:
           buildozer android debug
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4.6
+        uses: actions/upload-artifact@v4.3
         with:
           name: kivy-app-apk
           path: bin/*.apk
