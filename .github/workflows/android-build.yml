@@ -56,9 +56,10 @@ jobs:
           echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
           echo "$ANDROID_SDK_ROOT/build-tools" >> $GITHUB_PATH
 
-          # Accept licenses automatically in a non-interactive mode
+          # Accept licenses automatically
           echo "Accepting SDK licenses automatically..."
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --update
 
           # Install platform-tools, build-tools, and required SDK components
           echo "Installing SDK components..."
@@ -67,6 +68,13 @@ jobs:
             "platform-tools" \
             "platforms;android-30" \
             "build-tools;30.0.3"  # Stable version for build-tools
+
+          # Install build-tools explicitly if not found
+          if [ ! -d "$ANDROID_SDK_ROOT/build-tools/30.0.3" ]; then
+            echo "❌ build-tools version 30.0.3 not found, trying to install explicitly..."
+            wget https://dl.google.com/android/repository/build-tools_r30-linux.zip -O build-tools.zip
+            unzip build-tools.zip -d $ANDROID_SDK_ROOT/build-tools
+          fi
 
           # Ensure build-tools are installed and available
           echo "Listing build-tools folder..."
