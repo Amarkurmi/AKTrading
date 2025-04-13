@@ -9,36 +9,35 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
 
-      - name: Get Date
+      - name: 🕒 Get Date
         id: get-date
         run: |
-          echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-        shell: bash
+          echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
 
-      - name: Cache Buildozer global directory
-        uses: actions/cache@v2
+      - name: 🧠 Cache Buildozer global directory
+        uses: actions/cache@v3
         with:
           path: .buildozer_global
           key: buildozer-global-${{ hashFiles('buildozer.spec') }}
 
-      - name: Cache .buildozer
-        uses: actions/cache@v2
+      - name: 🧠 Cache .buildozer
+        uses: actions/cache@v3
         with:
           path: .buildozer
           key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
-      - name: Build with Buildozer
+      - name: ⚙️ Build with Buildozer
         uses: ArtemSBulgakov/buildozer-action@v1
         id: buildozer
         with:
           command: buildozer android debug
           buildozer_version: stable
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+      - name: 📦 Upload APK artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: package
+          name: app-release
           path: ${{ steps.buildozer.outputs.filename }}
