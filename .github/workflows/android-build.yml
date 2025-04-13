@@ -1,9 +1,9 @@
-name: Build Android APK
+name: Build Kivy APK
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   build:
@@ -20,76 +20,35 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            ccache \
-            git \
-            libffi-dev \
-            libssl-dev \
-            libsqlite3-dev \
-            libjpeg-dev \
-            zlib1g-dev \
-            libncurses5-dev \
-            libtool \
-            pkg-config \
-            automake \
-            unzip \
-            zip \
-            openjdk-17-jdk \
-            curl \
-            wget
-
-      - name: Install Android SDK Command Line Tools
-        run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools
-          mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/build-tools" >> $GITHUB_PATH
-
-      - name: Accept Licenses and Install Build Tools
-        run: |
-          yes | sdkmanager --licenses
-
-          sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
-
-          echo "✅ SDK Tools installed"
-
-      - name: Install Python dependencies
-        run: |
+          sudo apt update
+          sudo apt install -y zip unzip openjdk-17-jdk
           python -m pip install --upgrade pip
-          pip install Cython virtualenv
-          pip install buildozer
+          pip install buildozer cython
 
-      - name: Create buildozer.spec if missing
+      - name: Initialize buildozer.spec if it doesn't exist
         run: |
           if [ ! -f buildozer.spec ]; then
             buildozer init
           fi
 
-      - name: Update buildozer.spec to use correct SDK versions
+      - name: Fix buildozer.spec for correct SDK/NDK/build-tools
         run: |
-          sed -i 's/^#\?android.sdk =.*$/android.sdk = 30/' buildozer.spec
-          sed -i 's/^#\?android.ndk =.*$/android.ndk = 23b/' buildozer.spec
-          sed -i 's/^#\?android.build_tools_version =.*$/android.build_tools_version = 30.0.3/' buildozer.spec
+          sed -i '/^android.sdk =/d' buildozer.spec
+          sed -i '/^android.ndk =/d' buildozer.spec
+          sed -i '/^android.build_tools_version =/d' buildozer.spec
 
-      - name: Clean buildozer environment
-        run: |
-          rm -rf .buildozer
-          rm -rf ~/.buildozer
-          buildozer android clean || true
+          echo "android.sdk = 30" >> buildozer.spec
+          echo "android.ndk = 23b" >> buildozer.spec
+          echo "android.build_tools_version = 30.0.3" >> buildozer.spec
+
+      - name: Accept Android SDK licenses
+        run: yes | buildozer android accept-licenses
 
       - name: Build APK
-        run: |
-          buildozer android debug
+        run: buildozer android debug
 
-      - name: Upload APK artifact
+      - name: Upload APK as artifact
         uses: actions/upload-artifact@v4.6
         with:
-          name: kivy-app-apk
+          name: kivy-apk
           path: bin/*.apk
