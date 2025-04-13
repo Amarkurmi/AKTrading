@@ -423,6 +423,9 @@ warn_on_root = 1
 #    Instead of doing:
 #
 #[app]
+p4a.source_dir = 
+p4a.source = https://github.com/kivy/python-for-android.git
+p4a.branch = develop
 #source.exclude_patterns = license,data/audio/*.wav,data/images/original/*
 #
 #    This can be translated into:
