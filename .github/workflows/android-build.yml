@@ -50,27 +50,26 @@ jobs:
           mv $HOME/android-sdk/cmdline-tools/tmp/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
           rm -rf $HOME/android-sdk/cmdline-tools/tmp
 
-          echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
       - name: Accept Android SDK licenses
         run: |
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+          yes | sdkmanager --licenses
 
       - name: Install Android SDK components (Build Tools, Platforms)
         run: |
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+          sdkmanager \
             "build-tools;30.0.3" \
             "platform-tools" \
             "platforms;android-30"
 
-      - name: Add Build Tools to PATH and Verify AIDL
-        run: |
-          echo "PATH=$HOME/android-sdk/build-tools/30.0.3:$PATH" >> $GITHUB_ENV
-          export PATH=$HOME/android-sdk/build-tools/30.0.3:$PATH
+          echo "$HOME/android-sdk/build-tools/30.0.3" >> $GITHUB_PATH
 
-          echo "Verifying AIDL..."
-          which aidl || echo "AIDL not found in PATH!"
-          ls -l $HOME/android-sdk/build-tools/30.0.3/aidl || echo "AIDL binary missing!"
+      - name: Verify AIDL
+        run: |
+          echo "Looking for aidl..."
+          which aidl || echo "aidl not in PATH"
+          ls -l $HOME/android-sdk/build-tools/30.0.3/aidl || echo "aidl binary missing"
 
       - name: Install Python dependencies
         run: |
