@@ -1,0 +1,5 @@
+kivy
+yfinance
+pandas
+ta
+twilio
