@@ -36,7 +36,7 @@ jobs:
           buildozer android debug
 
       - name: 📤 Upload APK
-        uses: github-actions/upload-artifact@v3
+        uses: actions/upload-artifact@e7f61a3c3c8e7f2b4173c9cd1184850c6c889b3e
         with:
           name: app-release
           path: bin/*.apk
