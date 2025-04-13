@@ -44,17 +44,20 @@ jobs:
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
 
+          # Download SDK Command-line Tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools
           mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
 
+          # Set environment variables
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/build-tools" >> $GITHUB_PATH
 
+          # Accept licenses
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
+          # Install SDK components
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-30" \
@@ -72,16 +75,12 @@ jobs:
             buildozer init
           fi
 
-      - name: Patch buildozer.spec with SDK and Build Tools versions
+      - name: Force correct build-tools version in buildozer.spec
         run: |
-          sed -i '/^android.sdk/d' buildozer.spec
-          sed -i '/^android.ndk/d' buildozer.spec
           sed -i '/^android.build_tools_version/d' buildozer.spec
-          echo "android.sdk = 30" >> buildozer.spec
-          echo "android.ndk = 23b" >> buildozer.spec
           echo "android.build_tools_version = 30.0.3" >> buildozer.spec
 
-      - name: Clean buildozer environment
+      - name: Clean buildozer environment (force rebuild)
         run: |
           rm -rf .buildozer
           rm -rf ~/.buildozer
