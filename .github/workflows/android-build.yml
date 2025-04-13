@@ -42,45 +42,33 @@ jobs:
 
       - name: Install Android SDK Command-Line Tools
         run: |
-          # Create the necessary directory for sdkmanager
-          mkdir -p $HOME/android-sdk/cmdline-tools/latest
-          
-          # Download the command-line tools package
-          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
-          
-          # Unzip the downloaded package into the latest folder
-          unzip commandlinetools-linux-7583922_latest.zip -d $HOME/android-sdk/cmdline-tools/
-          
-          # Print the extracted content to confirm sdkmanager exists
-          echo "Contents of cmdline-tools directory:"
-          ls -l $HOME/android-sdk/cmdline-tools/
-          
-          # Ensure that the latest directory contains bin folder
-          echo "Contents of latest folder:"
-          ls -l $HOME/android-sdk/cmdline-tools/latest
+          mkdir -p $HOME/android-sdk/cmdline-tools
 
-          # List the bin directory specifically to check if sdkmanager exists
-          echo "Contents of latest/bin folder:"
+          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
+
+          # Unzip into a temp folder
+          unzip -q commandlinetools-linux-7583922_latest.zip -d $HOME/android-sdk/cmdline-tools/tmp
+
+          # Move extracted files into expected 'latest' location
+          mv $HOME/android-sdk/cmdline-tools/tmp/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+
+          # Clean up temp
+          rm -rf $HOME/android-sdk/cmdline-tools/tmp
+
+          # Confirm sdkmanager location
           ls -l $HOME/android-sdk/cmdline-tools/latest/bin
 
-          # Add sdkmanager to the PATH in the current shell
-          echo "export PATH=\$PATH:$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
-          source $GITHUB_ENV
-
-      - name: Verify SDK Manager Path and Files
-        run: |
-          # Check if sdkmanager is available in the path
-          echo "PATH: $PATH"
-          which sdkmanager || echo "sdkmanager not found"
+          # Add to PATH
+          echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
 
       - name: Accept Android SDK licenses
         run: |
-          # Accept licenses by running sdkmanager with an absolute path
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
-      - name: Install Android SDK components (AIDL and Build Tools)
+      - name: Install Android SDK components (Build Tools, Platforms)
         run: |
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3" "platform-tools" "platforms;android-30"
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+            "build-tools;30.0.3" "platform-tools" "platforms;android-30"
 
       - name: Install Python dependencies
         run: |
