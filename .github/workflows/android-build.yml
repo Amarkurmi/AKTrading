@@ -64,13 +64,10 @@ jobs:
             "platforms;android-30" \
             "build-tools;30.0.3"
 
-          # Verify installation of build-tools and AIDL
+          # Verify AIDL installation and check AIDL location
           echo "Verifying AIDL installation..."
-          ls -la $HOME/android-sdk/build-tools || true
-
-          # Check if AIDL exists in the build-tools directory
           if ! find $HOME/android-sdk/build-tools -name "aidl" -print; then
-            echo "❌ AIDL NOT FOUND. Attempting to install another version of build-tools..."
+            echo "❌ AIDL NOT FOUND. Attempting to install build-tools 29.0.3..."
             $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;29.0.3"
           else
             echo "✅ AIDL found in build-tools directory."
@@ -112,7 +109,7 @@ jobs:
           buildozer android debug
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4.6
+        uses: actions/upload-artifact@v3
         with:
           name: kivy-app-apk
           path: bin/*.apk
