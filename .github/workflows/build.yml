@@ -1,4 +1,4 @@
-name: Android Build
+ name: Android Build
 
 on:
   push:
@@ -40,7 +40,7 @@ jobs:
         run: ls -la bin/
 
       - name: 📦 Upload APK artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: app-release
           path: ${{ steps.buildozer.outputs.filename }}
