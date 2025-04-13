@@ -42,7 +42,6 @@ jobs:
 
       - name: Install Android SDK and Build Tools
         run: |
-          # Set up the Android SDK path
           export ANDROID_SDK_ROOT=$HOME/android-sdk
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           
@@ -57,24 +56,24 @@ jobs:
           echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
           echo "$ANDROID_SDK_ROOT/build-tools" >> $GITHUB_PATH
 
-          # Accept all SDK licenses automatically
+          # Explicitly accept all SDK licenses
           echo "Accepting all SDK licenses..."
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          echo y | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-          # Install SDK components (explicitly install build-tools;30.0.3 to avoid issues with 36.0.0)
+          # Install specific SDK components (version 30.0.3 for build-tools)
           echo "Installing SDK components (including build-tools;30.0.3)..."
           $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
             --no_https \
             "platform-tools" \
             "platforms;android-30" \
-            "build-tools;30.0.3"  # Use build-tools version 30.0.3
+            "build-tools;30.0.3"
 
-          # Debugging the SDK installation and checking build-tools directory
+          # Check build-tools folder to verify installation
           echo "Checking SDK installation..."
           ls -la $ANDROID_SDK_ROOT || true
           ls -la $ANDROID_SDK_ROOT/build-tools || true
 
-          # Check if aidl is installed
+          # Ensure AIDL exists in build-tools
           if ! find $ANDROID_SDK_ROOT/build-tools -name "aidl" -print; then
             echo "❌ AIDL not found in build-tools directory."
             echo "Attempting to locate AIDL..."
