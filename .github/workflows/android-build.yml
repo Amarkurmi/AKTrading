@@ -46,19 +46,10 @@ jobs:
 
           wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
 
-          # Unzip into a temp folder
           unzip -q commandlinetools-linux-7583922_latest.zip -d $HOME/android-sdk/cmdline-tools/tmp
-
-          # Move extracted files into expected 'latest' location
           mv $HOME/android-sdk/cmdline-tools/tmp/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-
-          # Clean up temp
           rm -rf $HOME/android-sdk/cmdline-tools/tmp
 
-          # Confirm sdkmanager location
-          ls -l $HOME/android-sdk/cmdline-tools/latest/bin
-
-          # Add to PATH
           echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
 
       - name: Accept Android SDK licenses
@@ -68,7 +59,16 @@ jobs:
       - name: Install Android SDK components (Build Tools, Platforms)
         run: |
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-            "build-tools;30.0.3" "platform-tools" "platforms;android-30"
+            "build-tools;30.0.3" \
+            "platform-tools" \
+            "platforms;android-30"
+
+          echo "Checking AIDL availability..."
+          ls -l $HOME/android-sdk/build-tools/30.0.3/aidl || echo "AIDL not found!"
+
+      - name: Add Build Tools to PATH
+        run: |
+          echo "PATH=$HOME/android-sdk/build-tools/30.0.3:$PATH" >> $GITHUB_ENV
 
       - name: Install Python dependencies
         run: |
