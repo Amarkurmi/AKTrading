@@ -56,8 +56,8 @@ jobs:
           echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
           echo "$ANDROID_SDK_ROOT/build-tools" >> $GITHUB_PATH
 
-          # Accept licenses automatically with the non-interactive mode
-          echo "Accepting SDK licenses..."
+          # Accept licenses automatically in a non-interactive mode
+          echo "Accepting SDK licenses automatically..."
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
 
           # Install platform-tools, build-tools, and required SDK components
@@ -66,16 +66,16 @@ jobs:
             --no_https \
             "platform-tools" \
             "platforms;android-30" \
-            "build-tools;30.0.3"  # Specifying a stable build-tools version
+            "build-tools;30.0.3"  # Stable version for build-tools
 
-          # Verify build-tools are installed
+          # Ensure build-tools are installed and available
           echo "Listing build-tools folder..."
           ls -la $ANDROID_SDK_ROOT/build-tools || true
 
-          # Ensure AIDL exists in build-tools directory
+          # Verify if AIDL exists in build-tools directory
           if ! find $ANDROID_SDK_ROOT/build-tools -name "aidl" -print; then
             echo "❌ AIDL not found in build-tools directory. Reinstalling build-tools..."
-            $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;29.0.3"
+            $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;29.0.3"  # Older stable version as a fallback
           else
             echo "✅ AIDL found in build-tools directory."
           fi
