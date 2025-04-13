@@ -55,19 +55,16 @@ jobs:
           echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
           echo "$ANDROID_SDK_ROOT/build-tools" >> $GITHUB_PATH
 
-          # Manually accept licenses (with an explicit echo to ensure acceptance)
+          # Manually accept licenses
           echo "Accepting all SDK licenses..."
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --no_https --licenses || true
 
-          # Install the necessary SDK components, including build-tools and platforms
+          # Install the necessary SDK components including a stable build-tools version
           echo "Installing SDK components..."
           $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-30" \
-            "build-tools;30.0.3" \
-            "build-tools;29.0.3" \
-            "build-tools;28.0.3" \
-            "build-tools;36.0.0"  # Adding a newer version of build-tools (36)
+            "build-tools;30.0.3"  # Use build-tools;30.0.3, a known stable version
 
           # Debugging the SDK and build-tools directory
           echo "Checking SDK installation..."
