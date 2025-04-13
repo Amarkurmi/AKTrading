@@ -64,14 +64,16 @@ jobs:
             "platforms;android-30" \
             "build-tools;30.0.3"
 
-          # Install build-tools 29.0.3 explicitly for AIDL support
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;29.0.3"
+          # Verify the installation of build-tools
+          echo "Verifying Android SDK installation..."
+          ls -la $HOME/android-sdk/build-tools || true
+          ls -la $HOME/android-sdk || true
 
-          # Check if aidl exists
-          echo "Verifying AIDL installation..."
+          # Explicitly check for build-tools and aidl tool
           if ! find $HOME/android-sdk/build-tools -name "aidl" -print; then
-            echo "❌ AIDL NOT FOUND. Attempting another version of build-tools..."
-            $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;28.0.3"
+            echo "❌ AIDL not found in build-tools directory."
+            echo "Attempting to install build-tools version 29.0.3..."
+            $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;29.0.3"
           else
             echo "✅ AIDL found in build-tools directory."
           fi
