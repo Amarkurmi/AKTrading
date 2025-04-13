@@ -57,7 +57,7 @@ jobs:
 
           # Accept licenses manually instead of using `yes |`
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-          
+
           # Install platform-tools and build-tools (ensure correct version is installed)
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
@@ -66,7 +66,9 @@ jobs:
 
           # Verify the build-tools installation
           echo "Verifying build-tools installation..."
-          ls -la $HOME/android-sdk/build-tools
+          ls -la $HOME/android-sdk/build-tools || true
+          echo "Checking for SDK Manager errors..."
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --list
 
       - name: Install Python dependencies
         run: |
@@ -89,7 +91,7 @@ jobs:
       - name: Debugging - Check AIDL Installation
         run: |
           echo "Listing build-tools folder..."
-          ls -la $HOME/android-sdk/build-tools
+          ls -la $HOME/android-sdk/build-tools || true
 
           # Check if the aidl tool exists
           if ! which aidl; then
