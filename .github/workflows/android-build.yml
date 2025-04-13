@@ -30,9 +30,13 @@ jobs:
             libsqlite3-dev \
             libjpeg-dev \
             zlib1g-dev \
-            openjdk-17-jdk \
+            libncurses5-dev \
+            libtool \
+            pkg-config \
+            automake \
             unzip \
-            zip
+            zip \
+            openjdk-17-jdk
 
       - name: Install Python dependencies
         run: |
@@ -45,11 +49,11 @@ jobs:
             buildozer init
           fi
 
-      - name: Build APK
+      - name: Clean and Build APK
         run: |
           buildozer android clean
           buildozer android update
-          buildozer android debug
+          buildozer android debug deploy run
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4.6
