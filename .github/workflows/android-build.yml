@@ -53,26 +53,24 @@ jobs:
           unzip commandlinetools-linux-8512546_latest.zip
           rm commandlinetools-linux-8512546_latest.zip
 
-      - name: Install Android SDK components (full installation)
+      - name: Install SDK and build-tools (Verify installation)
         run: |
-          # Install essential SDK components
+          # Install platform tools, build-tools, and other necessary SDK components
           yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "build-tools;33.0.2" "platforms;android-30" "tools"
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "build-tools;30.0.3" "platforms;android-30" "tools" # Additional try for AIDL
 
-      - name: Explicitly check and install AIDL if missing
+      - name: Verify build-tools installation and check AIDL
         run: |
-          # Check if AIDL exists in the build-tools directory
+          # List build-tools directory to check if it exists
+          echo "Listing build-tools directory contents:"
+          ls -la $ANDROID_SDK_ROOT/build-tools/
+
+          # Check if AIDL exists in build-tools
           if [ ! -f "$ANDROID_SDK_ROOT/build-tools/33.0.2/aidl" ]; then
-            echo "AIDL not found in 33.0.2, trying to locate it."
-            if [ ! -f "$ANDROID_SDK_ROOT/build-tools/30.0.3/aidl" ]; then
-              echo "AIDL not found in 30.0.3 either. Trying to install AIDL separately."
-              # Attempt to install AIDL manually if it's missing
-              wget https://dl.google.com/android/repository/build-tools/30.0.3/aidl
-              chmod +x aidl
-              mv aidl $ANDROID_SDK_ROOT/build-tools/33.0.2/
-            fi
+            echo "AIDL not found in build-tools/33.0.2. Listing directory contents."
+            ls -la $ANDROID_SDK_ROOT/build-tools/33.0.2
+            exit 1
           else
-            echo "AIDL is correctly installed in 33.0.2."
+            echo "AIDL is correctly installed in build-tools/33.0.2."
           fi
 
       - name: Set Buildozer NDK path
