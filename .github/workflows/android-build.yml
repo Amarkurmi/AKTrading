@@ -18,6 +18,7 @@ jobs:
       ANDROID_HOME: /home/runner/android-sdk
       ANDROIDAPI: "30"
       ANDROIDMINAPI: "21"
+      PATH: /home/runner/.local/bin:/home/runner/android-sdk/cmdline-tools/latest/bin:$PATH
 
     steps:
       - name: Checkout code
@@ -52,13 +53,12 @@ jobs:
           fi
           sed -i '/^android.ndk_path/d' buildozer.spec
           echo "android.ndk_path = /home/runner/android-ndk-r25b" >> buildozer.spec
-          # Remove deprecated sdk line if it exists
           sed -i '/^android.sdk =/d' buildozer.spec
 
       - name: Install Android SDK Build-tools and AIDL
         run: |
           sudo apt-get update
-          sudo apt-get install -y zip unzip openjdk-17-jdk
+          sudo apt-get install -y unzip zip openjdk-17-jdk
           mkdir -p $ANDROID_HOME/cmdline-tools
           cd $ANDROID_HOME/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
@@ -71,6 +71,7 @@ jobs:
 
       - name: Build APK
         run: |
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
           buildozer -v android debug
 
       - name: Upload APK artifact
