@@ -111,11 +111,11 @@ jobs:
           echo "Installing build-tools 30.0.3"
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
 
-          # **New Debugging Step:** List build-tools contents to check for AIDL
+          # **Debugging Step:** Listing build-tools contents to check for AIDL
           echo "Listing build-tools contents"
           ls /home/runner/android-sdk/build-tools/30.0.3/
 
-          # ✅ Check if AIDL is installed in the expected location
+          # ✅ Check if AIDL exists in the build-tools directory
           echo "Checking if AIDL exists in build-tools directory"
           if [ -f /home/runner/android-sdk/build-tools/30.0.3/aidl ]; then
             echo "AIDL found!"
@@ -124,8 +124,11 @@ jobs:
             $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
           fi
 
-          # ✅ Create the symbolic link for AIDL in the expected path
-          ln -sfn /home/runner/android-sdk/build-tools/30.0.3/aidl /home/runner/.buildozer/android/platform/android-sdk/build-tools/aidl
+          # ✅ Check if AIDL is present in the location, create symlink if necessary
+          echo "Creating symlink for AIDL if not found"
+          if [ ! -f /home/runner/.buildozer/android/platform/android-sdk/build-tools/aidl ]; then
+            ln -sfn /home/runner/android-sdk/build-tools/30.0.3/aidl /home/runner/.buildozer/android/platform/android-sdk/build-tools/aidl
+          fi
 
       - name: Set Buildozer NDK path
         run: |
