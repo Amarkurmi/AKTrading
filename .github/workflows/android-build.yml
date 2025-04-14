@@ -150,11 +150,11 @@ jobs:
             exit 1
           fi
           
-      - name: Install 32-bit libraries for aidl
+      - name: Install 32-bit libraries for AIDL
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386
+          sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386
           
       - name: Build APK
         run: |
