@@ -53,9 +53,19 @@ jobs:
           unzip commandlinetools-linux-8512546_latest.zip
           rm commandlinetools-linux-8512546_latest.zip
 
-      - name: Install Android SDK Build Tools
+      - name: Install Android SDK components
         run: |
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "build-tools;30.0.3"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "build-tools;30.0.3" "platforms;android-30" "tools"
+
+      - name: Verify AIDL Installation
+        run: |
+          # Check for AIDL in the build-tools directory
+          if [ -f "$ANDROID_SDK_ROOT/build-tools/30.0.3/aidl" ]; then
+            echo "AIDL is correctly installed"
+          else
+            echo "AIDL not found. Please check SDK setup."
+            exit 1
+          fi
 
       - name: Set Buildozer NDK path
         run: |
