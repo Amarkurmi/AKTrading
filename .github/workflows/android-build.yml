@@ -18,7 +18,7 @@ jobs:
       ANDROID_HOME: /home/runner/android-sdk
       ANDROIDAPI: "30"
       ANDROIDMINAPI: "21"
-      PATH: /home/runner/android-sdk/cmdline-tools/latest/bin:/home/runner/android-sdk/platform-tools:/usr/bin:/bin:/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
+      PATH: /home/runner/android-sdk/cmdline-tools/latest/bin:/home/runner/android-sdk/platform-tools:/usr/bin:/bin:/usr/lib/jvm/java-17-openjdk-amd64/bin:/home/runner/.local/bin:$PATH  # Add .local/bin to PATH
 
     steps:
       - name: Checkout code
