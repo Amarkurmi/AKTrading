@@ -18,7 +18,7 @@ jobs:
       ANDROID_HOME: /home/runner/android-sdk
       ANDROIDAPI: "30"
       ANDROIDMINAPI: "21"
-      PATH: /home/runner/android-sdk/cmdline-tools/latest/bin:/home/runner/android-sdk/platform-tools:/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
+      PATH: /home/runner/android-sdk/cmdline-tools/latest/bin:/home/runner/android-sdk/platform-tools:/usr/bin:/bin:/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
 
     steps:
       - name: Checkout code
@@ -54,10 +54,15 @@ jobs:
           sed -i '/^android.ndk_path/d' buildozer.spec
           echo "android.ndk_path = /home/runner/android-ndk-r25b" >> buildozer.spec
 
+      # ✅ Install all tools + tar and confirm it's in PATH
       - name: Install Android SDK Build-tools and AIDL
         run: |
           sudo apt-get update
           sudo apt-get install -y unzip zip tar openjdk-17-jdk
+
+          # Confirm tar is available
+          which tar || echo "tar not found"
+          tar --version || echo "tar failed"
 
           mkdir -p $ANDROID_HOME/cmdline-tools
           cd $ANDROID_HOME/cmdline-tools
