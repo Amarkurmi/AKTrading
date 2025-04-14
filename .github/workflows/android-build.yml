@@ -40,62 +40,51 @@ jobs:
           rm -rf /usr/local/lib/android/sdk/ndk/*
           echo "Old NDKs removed."
 
-      - name: Prepare directories and download NDK
+      - name: Download Android SDK and NDK
         run: |
-          # Ensure the NDK directory exists
-          NDK_DIR="/home/runner/.buildozer/android/platform"
-          NDK_ZIP="$NDK_DIR/android-ndk-r25b-linux.zip"
-          mkdir -p $NDK_DIR
+          # Download the SDK tools
+          mkdir -p /home/runner/android-sdk/cmdline-tools
+          cd /home/runner/android-sdk/cmdline-tools
           
-          # Check if NDK zip file exists, if not download it
-          if [ ! -f $NDK_ZIP ]; then
-            echo "NDK zip not found. Downloading..."
-            wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O $NDK_ZIP
-          else
-            echo "NDK zip already exists, skipping download."
+          if [ ! -f tools.zip ]; then
+            wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
           fi
-
-          # Ensure the NDK zip file is present before attempting to unzip
-          if [ -f $NDK_ZIP ]; then
-            echo "NDK archive found, extracting..."
-            unzip -q $NDK_ZIP -d $NDK_DIR
-          else
-            echo "NDK archive not found. Exiting..."
-            exit 1
-          fi
-
-          # Move the NDK to the correct location
-          mv $NDK_DIR/android-ndk-r25b $NDK_DIR/../android-ndk-r25b
           
-      - name: Install Android SDK tools and build-tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip zip tar openjdk-17-jdk wget
-
-          # Create the necessary directories for the SDK
-          mkdir -p $ANDROID_HOME/cmdline-tools
-          cd $ANDROID_HOME/cmdline-tools
-          
-          # Download the command-line tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
-          unzip tools.zip -d temp
+          unzip -q tools.zip -d temp
           rm tools.zip
           mkdir -p latest
           mv temp/cmdline-tools/* latest/
           rm -rf temp
-
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-
-          # Accept SDK licenses
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           
-          # Install required SDK components using cmdline-tools
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+          # Set up SDK manager path and accept licenses
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+          # Install SDK components
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" "platforms;android-30" "build-tools;30.0.3"
 
-          # ✅ Symlink SDK to where Buildozer expects it
-          mkdir -p ~/.buildozer/android/platform/
-          ln -sfn /home/runner/android-sdk ~/.buildozer/android/platform/android-sdk
+      - name: Install Android NDK
+        run: |
+          # Check if NDK is already downloaded
+          NDK_DIR="/home/runner/.buildozer/android/platform"
+          NDK_ZIP="$NDK_DIR/android-ndk-r25b-linux.zip"
+
+          if [ ! -f $NDK_ZIP ]; then
+            echo "Downloading Android NDK..."
+            wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O $NDK_ZIP
+          fi
+
+          # Unzip and install NDK
+          if [ -f $NDK_ZIP ]; then
+            unzip -q $NDK_ZIP -d $NDK_DIR
+          else
+            echo "NDK download failed, aborting."
+            exit 1
+          fi
+          
+          # Rename NDK folder to the correct name
+          mv $NDK_DIR/android-ndk-r25b $NDK_DIR/../android-ndk-r25b
 
       - name: Set Buildozer NDK path
         run: |
