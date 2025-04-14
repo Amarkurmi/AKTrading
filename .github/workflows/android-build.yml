@@ -84,12 +84,13 @@ jobs:
           mv temp/cmdline-tools/* latest/
           rm -rf temp
 
+          # Make sure the cmdline-tools are in the PATH
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
 
           # Accept SDK licenses
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           
-          # Install required SDK components using cmdline-tools
+          # Install required SDK components using sdkmanager
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" "platforms;android-30" "build-tools;30.0.3"
 
