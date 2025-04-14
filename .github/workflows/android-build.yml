@@ -134,12 +134,15 @@ jobs:
 
       - name: Fix AIDL location for Buildozer
         run: |
-          echo "Fixing AIDL path for Buildozer..."
+          echo "Fixing AIDL location for Buildozer..."
           AIDL_SRC="/home/runner/android-sdk/build-tools/30.0.3/aidl"
-          AIDL_DEST="/home/runner/.buildozer/android/platform/android-sdk/build-tools/aidl"
+          AIDL_DEST_DIR="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3"
+          AIDL_DEST="$AIDL_DEST_DIR/aidl"
+          
+          mkdir -p "$AIDL_DEST_DIR"
           
           if [ -f "$AIDL_SRC" ]; then
-            echo "AIDL found at $AIDL_SRC, copying to Buildozer expected location..."
+            echo "AIDL found at $AIDL_SRC, copying to $AIDL_DEST"
             cp "$AIDL_SRC" "$AIDL_DEST"
             chmod +x "$AIDL_DEST"
           else
