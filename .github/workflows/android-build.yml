@@ -149,7 +149,13 @@ jobs:
             echo "AIDL not found at $AIDL_SRC. Failing build."
             exit 1
           fi
-
+          
+      - name: Install 32-bit libraries for aidl
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386
+          
       - name: Build APK
         run: |
           buildozer -v android debug
