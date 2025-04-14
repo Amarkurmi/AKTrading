@@ -10,12 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ANDROID_NDK: /home/runner/android-ndk-r25b
-      ANDROID_NDK_HOME: /home/runner/android-ndk-r25b
-      ANDROID_NDK_ROOT: /home/runner/android-ndk-r25b
-      ANDROIDNDK: /home/runner/android-ndk-r25b
-      ANDROID_SDK_ROOT: /home/runner/android-sdk
-      ANDROID_HOME: /home/runner/android-sdk
       ANDROIDAPI: "30"
       ANDROIDMINAPI: "21"
 
@@ -36,42 +30,28 @@ jobs:
       - name: Remove incorrect NDK versions
         run: |
           rm -rf ~/.buildozer/android/platform/android-ndk-*
-          rm -rf /usr/local/lib/android/sdk/ndk/*
           echo "Old NDKs removed."
 
-      - name: Download and extract NDK r25b (cached)
+      - name: Download and extract NDK r25b
         run: |
           wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
           unzip android-ndk-r25b-linux.zip
-          mv android-ndk-r25b /home/runner/android-ndk-r25b
+          mkdir -p ~/.buildozer/android/platform
+          mv android-ndk-r25b ~/.buildozer/android/platform/
 
-      - name: Install Android Command-Line Tools
+      - name: Install Android Command-Line Tools in Buildozer path
         run: |
-          mkdir -p $ANDROID_SDK_ROOT
-          cd $ANDROID_SDK_ROOT
-          wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-          unzip commandlinetools-linux-8512546_latest.zip
-          rm commandlinetools-linux-8512546_latest.zip
+          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
+          cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip
+          mv cmdline-tools latest
+          rm cmdline-tools.zip
 
-      - name: Install SDK and build-tools (Verify installation)
+      - name: Install SDK components Buildozer needs
         run: |
-          # Install platform tools, build-tools, and other necessary SDK components
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "build-tools;33.0.2" "platforms;android-30" "tools"
-
-      - name: Verify build-tools installation and check AIDL
-        run: |
-          # List build-tools directory to check if it exists
-          echo "Listing build-tools directory contents:"
-          ls -la $ANDROID_SDK_ROOT/build-tools/
-
-          # Check if AIDL exists in build-tools
-          if [ ! -f "$ANDROID_SDK_ROOT/build-tools/33.0.2/aidl" ]; then
-            echo "AIDL not found in build-tools/33.0.2. Listing directory contents."
-            ls -la $ANDROID_SDK_ROOT/build-tools/33.0.2
-            exit 1
-          else
-            echo "AIDL is correctly installed in build-tools/33.0.2."
-          fi
+          yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=${HOME}/.buildozer/android/platform/android-sdk \
+            "platform-tools" "build-tools;30.0.3" "platforms;android-30"
 
       - name: Set Buildozer NDK path
         run: |
@@ -79,7 +59,7 @@ jobs:
             buildozer init
           fi
           sed -i '/^android.ndk_path/d' buildozer.spec
-          echo "android.ndk_path = /home/runner/android-ndk-r25b" >> buildozer.spec
+          echo "android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r25b" >> buildozer.spec
 
       - name: Build APK
         run: |
