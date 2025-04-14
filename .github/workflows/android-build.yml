@@ -45,9 +45,11 @@ jobs:
           mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
           cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
-          unzip tools.zip -d latest
+          unzip tools.zip -d temp
+          mv temp/cmdline-tools/* latest/
+          rm -rf temp tools.zip
 
-      - name: Install required SDK components using absolute path to sdkmanager
+      - name: Install required SDK components using sdkmanager
         run: |
           yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
             "platform-tools" \
