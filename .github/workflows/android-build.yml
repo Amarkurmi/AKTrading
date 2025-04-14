@@ -45,14 +45,6 @@ jobs:
           unzip android-ndk-r25b-linux.zip
           mv android-ndk-r25b /home/runner/android-ndk-r25b
 
-      - name: Download and extract Android Build Tools (for AIDL)
-        run: |
-          mkdir -p /home/runner/android-sdk/build-tools/30.0.3
-          wget https://dl.google.com/android/repository/build-tools_r30.0.3-linux.zip
-          unzip -q build-tools_r30.0.3-linux.zip -d /home/runner/android-sdk/build-tools/
-          mv /home/runner/android-sdk/build-tools/android-30.0.3/* /home/runner/android-sdk/build-tools/30.0.3/
-          rm -rf /home/runner/android-sdk/build-tools/android-30.0.3
-
       - name: Set Buildozer NDK path
         run: |
           if [ ! -f buildozer.spec ]; then
