@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build APK
 
 on:
   push:
@@ -44,12 +44,10 @@ jobs:
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
 
-          # Download and extract SDK commandline tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O sdk-tools.zip
           unzip sdk-tools.zip -d $HOME/android-sdk/cmdline-tools
           mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
 
-          # Set environment variables
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
@@ -71,17 +69,10 @@ jobs:
           pip install Cython virtualenv
           pip install buildozer
 
-      - name: Initialize Buildozer Spec (if missing)
-        run: |
-          if [ ! -f buildozer.spec ]; then
-            buildozer init
-          fi
-
       - name: Clean Buildozer Cache
         run: |
           rm -rf .buildozer
           rm -rf ~/.buildozer
-          buildozer android clean || true
 
       - name: Build APK
         run: |
@@ -90,5 +81,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4.6
         with:
-          name: kivy-app-apk
+          name: kivy-apk
           path: bin/*.apk
