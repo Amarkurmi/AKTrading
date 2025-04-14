@@ -132,6 +132,7 @@ jobs:
           sed -i '/^android.ndk_path/d' buildozer.spec
           echo "android.ndk_path = /home/runner/android-ndk-r25b" >> buildozer.spec
 
+      # ✅ Fix AIDL location for Buildozer
       - name: Fix AIDL location for Buildozer
         run: |
           echo "Fixing AIDL location for Buildozer..."
@@ -150,18 +151,25 @@ jobs:
             exit 1
           fi
           
+      # ✅ Install 32-bit libraries for AIDL
       - name: Install 32-bit libraries for AIDL
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
           sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386
 
+      # ✅ Download and override AIDL manually
       - name: Replace AIDL with a compatible version
         run: |
+          echo "Replacing AIDL with verified binary..."
           AIDL_DEST_DIR="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3"
           mkdir -p "$AIDL_DEST_DIR"
           wget https://dl.google.com/android/repository/build-tools_r30.0.3-linux.zip -O build-tools.zip
-          unzip -j build-tools.zip 'android-*/aidl' -d "$AIDL_DEST_DIR"
+          
+          # Unzip with -o to force overwrite and avoid prompts
+          unzip -o -j build-tools.zip 'android-*/aidl' -d "$AIDL_DEST_DIR"
+          
+          # Ensure the file is executable
           chmod +x "$AIDL_DEST_DIR/aidl"
 
       - name: Diagnose AIDL binary
