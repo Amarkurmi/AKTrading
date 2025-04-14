@@ -18,7 +18,7 @@ jobs:
       ANDROID_HOME: /home/runner/android-sdk
       ANDROIDAPI: "30"
       ANDROIDMINAPI: "21"
-      PATH: /home/runner/android-sdk/cmdline-tools/latest/bin:/home/runner/android-sdk/platform-tools:/usr/bin:/bin:/usr/lib/jvm/java-17-openjdk-amd64/bin:/home/runner/.local/bin:$PATH  # Add .local/bin to PATH
+      PATH: /home/runner/android-sdk/cmdline-tools/latest/bin:/home/runner/android-sdk/platform-tools:/usr/bin:/bin:/usr/lib/jvm/java-17-openjdk-amd64/bin:/home/runner/.local/bin:$PATH
 
     steps:
       - name: Checkout code
@@ -42,10 +42,23 @@ jobs:
 
       - name: Download and extract NDK r25b (cached)
         run: |
-          wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
-          unzip android-ndk-r25b-linux.zip
-          mv android-ndk-r25b /home/runner/android-ndk-r25b
+          # Download the NDK zip file
+          NDK_ZIP="/home/runner/.buildozer/android/platform/android-ndk-r25b-linux.zip"
+          if [ ! -f $NDK_ZIP ]; then
+            wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O $NDK_ZIP
+          fi
 
+          # Check if the file is downloaded
+          if [ -f $NDK_ZIP ]; then
+            echo "NDK archive found, extracting..."
+            unzip -q $NDK_ZIP -d /home/runner/.buildozer/android/platform/
+          else
+            echo "NDK archive not found. Exiting..."
+            exit 1
+          fi
+
+          mv /home/runner/.buildozer/android/platform/android-ndk-r25b /home/runner/android-ndk-r25b
+          
       - name: Set Buildozer NDK path
         run: |
           if [ ! -f buildozer.spec ]; then
