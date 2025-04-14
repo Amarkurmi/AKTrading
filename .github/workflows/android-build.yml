@@ -111,9 +111,12 @@ jobs:
           echo "Installing build-tools 30.0.3"
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
 
-          # ✅ Install AIDL and ensure it's available in the correct path
+          # ✅ Install AIDL, and ensure it's available in the correct path
           echo "Installing AIDL"
-          ln -sfn /home/runner/android-sdk/build-tools/30.0.3/aidl /home/runner/.buildozer/android/platform/android-sdk/build-tools/aidl
+          # Install build-tools package (make sure AIDL is included)
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
+
+          # ✅ Ensure the AIDL binary is in the correct location
           ln -sfn /home/runner/android-sdk/build-tools/30.0.3/aidl /home/runner/.buildozer/android/platform/android-sdk/build-tools/aidl
 
       - name: Set Buildozer NDK path
