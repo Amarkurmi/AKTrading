@@ -55,18 +55,25 @@ jobs:
 
       - name: Install Android SDK components
         run: |
+          # Install Android SDK components (platform-tools, build-tools, etc.)
           yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "build-tools;30.0.3" "platforms;android-30" "tools"
 
       - name: Install AIDL and verify
         run: |
-          # Install AIDL tool explicitly
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "build-tools;30.0.3"
-          # Check if AIDL is installed
+          # Check if AIDL is installed in the build-tools directory
           if [ -f "$ANDROID_SDK_ROOT/build-tools/30.0.3/aidl" ]; then
             echo "AIDL is correctly installed."
           else
-            echo "AIDL not found. Please check SDK setup."
-            exit 1
+            echo "AIDL not found in build-tools/30.0.3. Trying to reinstall build-tools."
+            # Try reinstalling build-tools specifically to ensure AIDL is included
+            yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "build-tools;30.0.3"
+            # Recheck for AIDL
+            if [ -f "$ANDROID_SDK_ROOT/build-tools/30.0.3/aidl" ]; then
+              echo "AIDL is correctly installed after reinstall."
+            else
+              echo "AIDL still not found. Please check SDK setup."
+              exit 1
+            fi
           fi
 
       - name: Set Buildozer NDK path
