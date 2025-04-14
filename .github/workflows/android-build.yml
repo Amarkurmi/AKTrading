@@ -45,9 +45,17 @@ jobs:
           unzip android-ndk-r25b-linux.zip
           mv android-ndk-r25b /home/runner/android-ndk-r25b
 
+      - name: Install Android Command-Line Tools
+        run: |
+          mkdir -p $ANDROID_SDK_ROOT
+          cd $ANDROID_SDK_ROOT
+          wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+          unzip commandlinetools-linux-8512546_latest.zip
+          rm commandlinetools-linux-8512546_latest.zip
+
       - name: Install Android SDK Build Tools
         run: |
-          echo "y" | sdkmanager --sdk_root=$ANDROID_SDK_ROOT "build-tools;30.0.3"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "build-tools;30.0.3"
 
       - name: Set Buildozer NDK path
         run: |
