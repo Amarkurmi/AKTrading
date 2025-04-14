@@ -40,17 +40,17 @@ jobs:
       - name: Set environment variables
         run: |
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$HOME/android-ndk-r25b" >> $GITHUB_ENV
+          echo "ANDROID_NDK=$HOME/android-ndk-r25b" >> $GITHUB_ENV
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "$HOME/android-sdk/build-tools/30.0.3" >> $GITHUB_PATH
 
-      - name: Symlink legacy tools path for Buildozer compatibility
+      - name: Symlink legacy tools path for Buildozer
         run: |
           ln -sfn $HOME/android-sdk/cmdline-tools/latest $HOME/android-sdk/tools
 
-      - name: Accept SDK licenses
+      - name: Accept Licenses
         run: yes | sdkmanager --licenses
 
       - name: Install Android SDK packages
@@ -60,10 +60,16 @@ jobs:
             "platforms;android-30" \
             "build-tools;30.0.3"
 
-      - name: Link Android SDK to Buildozer expected path
+      - name: Install NDK 25b manually
+        run: |
+          wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
+          unzip android-ndk-r25b-linux.zip -d $HOME
+
+      - name: Link SDK and NDK where Buildozer expects them
         run: |
           mkdir -p ~/.buildozer/android/platform
           ln -sfn $HOME/android-sdk ~/.buildozer/android/platform/android-sdk
+          ln -sfn $HOME/android-ndk-r25b ~/.buildozer/android/platform/android-ndk-r25b
 
       - name: Install Python dependencies
         run: |
@@ -80,7 +86,7 @@ jobs:
         run: buildozer --log-level=2 android debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4.6
+        uses: actions/upload-artifact@v4
         with:
           name: kivy-apk
           path: bin/*.apk
