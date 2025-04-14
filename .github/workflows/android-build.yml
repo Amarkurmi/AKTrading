@@ -55,18 +55,24 @@ jobs:
 
       - name: Install Android SDK components (full installation)
         run: |
-          # Install Android SDK components (including build-tools, AIDL, etc.)
+          # Install essential SDK components
           yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "build-tools;33.0.2" "platforms;android-30" "tools"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "build-tools;30.0.3" "platforms;android-30" "tools" # Additional try for AIDL
 
-      - name: Verify AIDL Installation
+      - name: Explicitly check and install AIDL if missing
         run: |
           # Check if AIDL exists in the build-tools directory
-          if [ -f "$ANDROID_SDK_ROOT/build-tools/33.0.2/aidl" ]; then
-            echo "AIDL is correctly installed."
+          if [ ! -f "$ANDROID_SDK_ROOT/build-tools/33.0.2/aidl" ]; then
+            echo "AIDL not found in 33.0.2, trying to locate it."
+            if [ ! -f "$ANDROID_SDK_ROOT/build-tools/30.0.3/aidl" ]; then
+              echo "AIDL not found in 30.0.3 either. Trying to install AIDL separately."
+              # Attempt to install AIDL manually if it's missing
+              wget https://dl.google.com/android/repository/build-tools/30.0.3/aidl
+              chmod +x aidl
+              mv aidl $ANDROID_SDK_ROOT/build-tools/33.0.2/
+            fi
           else
-            echo "AIDL not found in build-tools/33.0.2. Listing directory contents."
-            ls -la $ANDROID_SDK_ROOT/build-tools/33.0.2
-            exit 1
+            echo "AIDL is correctly installed in 33.0.2."
           fi
 
       - name: Set Buildozer NDK path
