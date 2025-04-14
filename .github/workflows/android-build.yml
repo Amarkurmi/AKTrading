@@ -1,45 +1,54 @@
-name: Build Android App with Buildozer
+name: Build Kivy APK
 
 on:
   push:
     branches:
-      - main  # change if your default branch is different
-  workflow_dispatch:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: 🐍 Set up Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: 📦 Install dependencies
+      - name: Install system dependencies
         run: |
+          sudo apt update
+          sudo apt install -y zip unzip openjdk-17-jdk
           python -m pip install --upgrade pip
           pip install buildozer cython
 
-      - name: 📂 Install Android SDK packages
+      - name: Initialize buildozer.spec if it doesn't exist
         run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;23.1.7779620"
+          if [ ! -f buildozer.spec ]; then
+            buildozer init
+          fi
 
-      - name: 🧹 Clean up duplicate android.sdk entries
+      - name: Fix buildozer.spec for correct SDK/NDK/build-tools
         run: |
-          sed -i '/^android.sdk = /d' buildozer.spec
-          sed -i '/^android.ndk = /d' buildozer.spec
-          sed -i '/^android.build_tools_version = /d' buildozer.spec
+          sed -i '/^android.sdk =/d' buildozer.spec
+          sed -i '/^android.ndk =/d' buildozer.spec
+          sed -i '/^android.build_tools_version =/d' buildozer.spec
 
-      - name: 🛠 Add correct SDK/NDK/build-tools versions
-        run: |
           echo "android.sdk = 30" >> buildozer.spec
           echo "android.ndk = 23b" >> buildozer.spec
           echo "android.build_tools_version = 30.0.3" >> buildozer.spec
 
-      - name: 🏗 Build the APK
+      - name: Accept Android SDK licenses
+        run: yes | buildozer android accept-licenses
+
+      - name: Build APK
         run: buildozer android debug
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4.6
+        with:
+          name: kivy-apk
+          path: bin/*.apk
