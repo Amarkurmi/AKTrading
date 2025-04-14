@@ -1,5 +1,6 @@
 [app]
-android.sdk = 30
+android.api = 30
+android.sdk = 30.0.3
 android.ndk = 23b
 android.build_tools_version = 30.0.3
 # (str) Title of your application
