@@ -155,6 +155,14 @@ jobs:
           sudo dpkg --add-architecture i386
           sudo apt-get update
           sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386
+
+      - name: Diagnose AIDL binary
+        run: |
+          echo "Checking aidl binary type:"
+          file /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
+
+          echo "Checking aidl dependencies:"
+          ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
           
       - name: Build APK
         run: |
