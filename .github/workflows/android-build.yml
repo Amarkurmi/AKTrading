@@ -40,17 +40,18 @@ jobs:
           mkdir -p ~/.buildozer/android/platform
           mv android-ndk-r25b ~/.buildozer/android/platform/
 
-      - name: Download Android command line tools (old layout for Buildozer compatibility)
+      - name: Install Android command-line tools with legacy layout
         run: |
-          mkdir -p ~/.buildozer/android/platform/android-sdk
-          cd ~/.buildozer/android/platform/android-sdk
+          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
+          cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip cmdline-tools.zip -d tools
-          rm cmdline-tools.zip
+          unzip cmdline-tools.zip -d latest
+          mkdir -p ~/.buildozer/android/platform/android-sdk/tools
+          cp -r latest/* ~/.buildozer/android/platform/android-sdk/tools/
+          chmod +x ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
 
       - name: Accept licenses and install required SDK components
         run: |
-          echo "Installing build-tools, platform-tools, and platform..."
           yes | ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --sdk_root=${HOME}/.buildozer/android/platform/android-sdk \
             "platform-tools" \
             "build-tools;30.0.3" \
