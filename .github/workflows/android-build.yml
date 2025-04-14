@@ -1,9 +1,9 @@
-name: Build Kivy APK
+name: Build Android APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,35 +20,94 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt update
-          sudo apt install -y zip unzip openjdk-17-jdk
-          python -m pip install --upgrade pip
-          pip install buildozer cython
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            ccache \
+            git \
+            libffi-dev \
+            libssl-dev \
+            libsqlite3-dev \
+            libjpeg-dev \
+            zlib1g-dev \
+            libncurses5-dev \
+            libtool \
+            pkg-config \
+            automake \
+            unzip \
+            zip \
+            openjdk-17-jdk \
+            curl \
+            wget
 
-      - name: Initialize buildozer.spec if it doesn't exist
+      - name: Install Android SDK and Build Tools
+        run: |
+          mkdir -p $HOME/android-sdk/cmdline-tools
+
+          # Download and unzip SDK command line tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools
+          mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+
+          # Update environment variables to include SDK paths
+          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/build-tools" >> $GITHUB_PATH
+
+          # Accept licenses
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+
+          # Install platform-tools, build-tools, and required SDK components
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" \
+            "platforms;android-30" \
+            "build-tools;30.0.3"
+
+          # Verifying AIDL installation after installation
+          echo "Verifying AIDL installation..."
+          find $HOME/android-sdk/build-tools -name "aidl" -print
+
+          # Log the list of installed SDK tools
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --list
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install Cython virtualenv
+          pip install buildozer
+
+      - name: Create buildozer.spec if missing
         run: |
           if [ ! -f buildozer.spec ]; then
             buildozer init
           fi
 
-      - name: Fix buildozer.spec for correct SDK/NDK/build-tools
+      - name: Clean buildozer environment (force rebuild)
         run: |
-          sed -i '/^android.sdk =/d' buildozer.spec
-          sed -i '/^android.ndk =/d' buildozer.spec
-          sed -i '/^android.build_tools_version =/d' buildozer.spec
+          rm -rf .buildozer
+          rm -rf ~/.buildozer
+          buildozer android clean || true  # tolerate errors here
 
-          echo "android.sdk = 30" >> buildozer.spec
-          echo "android.ndk = 23b" >> buildozer.spec
-          echo "android.build_tools_version = 30.0.3" >> buildozer.spec
+      - name: Debugging - Check AIDL Installation
+        run: |
+          echo "Listing build-tools folder..."
+          ls -la $HOME/android-sdk/build-tools || true
 
-      - name: Accept Android SDK licenses
-        run: yes | buildozer android accept-licenses
+          # Check if the aidl tool exists
+          if ! which aidl; then
+            echo "❌ AIDL NOT FOUND. Attempting to locate aidl..."
+            find $HOME/android-sdk/build-tools -name "aidl" -print || true
+          else
+            echo "✅ AIDL found at $(which aidl)"
+          fi
 
       - name: Build APK
-        run: buildozer android debug
+        run: |
+          buildozer android debug
 
-      - name: Upload APK as artifact
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4.6
         with:
-          name: kivy-apk
+          name: kivy-app-apk
           path: bin/*.apk
