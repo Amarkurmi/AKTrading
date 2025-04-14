@@ -45,10 +45,6 @@ jobs:
           unzip android-ndk-r25b-linux.zip
           mv android-ndk-r25b /home/runner/android-ndk-r25b
 
-      - name: Install Android SDK Build Tools
-        run: |
-          echo "y" | sdkmanager --sdk_root=$ANDROID_SDK_ROOT "build-tools;30.0.3"
-
       - name: Set Buildozer NDK path
         run: |
           if [ ! -f buildozer.spec ]; then
