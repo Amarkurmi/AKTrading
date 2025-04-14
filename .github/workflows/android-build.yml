@@ -156,6 +156,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386
 
+      - name: Replace AIDL with a compatible version
+        run: |
+          AIDL_DEST_DIR="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3"
+          mkdir -p "$AIDL_DEST_DIR"
+          wget https://dl.google.com/android/repository/build-tools_r30.0.3-linux.zip -O build-tools.zip
+          unzip -j build-tools.zip 'android-*/aidl' -d "$AIDL_DEST_DIR"
+          chmod +x "$AIDL_DEST_DIR/aidl"
+
       - name: Diagnose AIDL binary
         run: |
           echo "Checking aidl binary type:"
