@@ -40,36 +40,28 @@ jobs:
             curl \
             wget
 
-      - name: Install Android SDK and Build Tools
+      - name: Install Android SDK and Accept Licenses
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
 
-          # Download and unzip SDK command line tools
+          # Download and extract the commandline tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools
           mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
 
-          # Update environment variables to include SDK paths
+          # Set environment variables
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/build-tools" >> $GITHUB_PATH
 
-          # Accept licenses
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+          # Accept all licenses
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
-          # Install platform-tools, build-tools, and required SDK components
+          # Install SDK components after accepting licenses
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-30" \
             "build-tools;30.0.3"
-
-          # Verifying AIDL installation after installation
-          echo "Verifying AIDL installation..."
-          find $HOME/android-sdk/build-tools -name "aidl" -print
-
-          # Log the list of installed SDK tools
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --list
 
       - name: Install Python dependencies
         run: |
@@ -83,31 +75,23 @@ jobs:
             buildozer init
           fi
 
-      - name: Clean buildozer environment (force rebuild)
+      - name: Clean buildozer environment
         run: |
           rm -rf .buildozer
           rm -rf ~/.buildozer
-          buildozer android clean || true  # tolerate errors here
+          buildozer android clean || true
 
-      - name: Debugging - Check AIDL Installation
+      - name: Verify AIDL
         run: |
-          echo "Listing build-tools folder..."
-          ls -la $HOME/android-sdk/build-tools || true
-
-          # Check if the aidl tool exists
-          if ! which aidl; then
-            echo "❌ AIDL NOT FOUND. Attempting to locate aidl..."
-            find $HOME/android-sdk/build-tools -name "aidl" -print || true
-          else
-            echo "✅ AIDL found at $(which aidl)"
-          fi
+          echo "Looking for aidl..."
+          find $HOME/android-sdk/build-tools -name "aidl" -print || echo "AIDL not found"
 
       - name: Build APK
         run: |
           buildozer android debug
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4.6
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
         with:
           name: kivy-app-apk
           path: bin/*.apk
