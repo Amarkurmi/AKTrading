@@ -104,6 +104,16 @@ jobs:
           mkdir -p ~/.buildozer/android/platform/
           ln -sfn /home/runner/android-sdk ~/.buildozer/android/platform/android-sdk
 
+          # Ensure build-tools directory exists
+          mkdir -p /home/runner/.buildozer/android/platform/android-sdk/build-tools
+
+          # ✅ Install the required build-tools version
+          echo "Installing build-tools 30.0.3"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
+
+          # ✅ Create the symbolic link for AIDL in the expected path
+          ln -sfn /home/runner/android-sdk/build-tools/30.0.3/aidl /home/runner/.buildozer/android/platform/android-sdk/build-tools/aidl
+
       - name: Set Buildozer NDK path
         run: |
           if [ ! -f buildozer.spec ]; then
