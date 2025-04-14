@@ -94,6 +94,9 @@ jobs:
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" "platforms;android-30" "build-tools;30.0.3"
 
+          # ✅ Create the necessary directory structure for sdkmanager
+          mkdir -p /home/runner/.buildozer/android/platform/android-sdk/tools/bin
+
           # ✅ Create symlink to make sdkmanager accessible in the old path
           ln -sfn /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
 
