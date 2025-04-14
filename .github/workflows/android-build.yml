@@ -111,23 +111,17 @@ jobs:
           echo "Installing build-tools 30.0.3"
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
 
-          # **Debugging Step:** Listing build-tools contents to check for AIDL
+          # **New Debugging Step:** List build-tools contents to check for AIDL
           echo "Listing build-tools contents"
           ls /home/runner/android-sdk/build-tools/30.0.3/
 
-          # ✅ Check if AIDL exists in the build-tools directory
+          # ✅ Check if AIDL is installed in the expected location
           echo "Checking if AIDL exists in build-tools directory"
           if [ -f /home/runner/android-sdk/build-tools/30.0.3/aidl ]; then
             echo "AIDL found!"
           else
             echo "AIDL missing. Attempting to reinstall build-tools."
             $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
-          fi
-
-          # ✅ Check if AIDL is present in the location, create symlink if necessary
-          echo "Creating symlink for AIDL if not found"
-          if [ ! -f /home/runner/.buildozer/android/platform/android-sdk/build-tools/aidl ]; then
-            ln -sfn /home/runner/android-sdk/build-tools/30.0.3/aidl /home/runner/.buildozer/android/platform/android-sdk/build-tools/aidl
           fi
 
       - name: Set Buildozer NDK path
@@ -137,6 +131,21 @@ jobs:
           fi
           sed -i '/^android.ndk_path/d' buildozer.spec
           echo "android.ndk_path = /home/runner/android-ndk-r25b" >> buildozer.spec
+
+      - name: Fix AIDL location for Buildozer
+        run: |
+          echo "Fixing AIDL path for Buildozer..."
+          AIDL_SRC="/home/runner/android-sdk/build-tools/30.0.3/aidl"
+          AIDL_DEST="/home/runner/.buildozer/android/platform/android-sdk/build-tools/aidl"
+          
+          if [ -f "$AIDL_SRC" ]; then
+            echo "AIDL found at $AIDL_SRC, copying to Buildozer expected location..."
+            cp "$AIDL_SRC" "$AIDL_DEST"
+            chmod +x "$AIDL_DEST"
+          else
+            echo "AIDL not found at $AIDL_SRC. Failing build."
+            exit 1
+          fi
 
       - name: Build APK
         run: |
