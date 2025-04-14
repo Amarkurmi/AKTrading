@@ -6,7 +6,6 @@ android.build_tools_version = 30.0.3
 android.skip_update = True
 android.accept_sdk_license = True
 android.ndk_path = /home/runner/android-ndk-r25b
-
 # (str) Title of your application
 title = AKTrading
 
@@ -288,6 +287,8 @@ fullscreen = 0
 
 # (bool) Copy library instead of making a libpymodules.so
 #android.copy_libs = 1
+# Android Permissions (add more if needed)
+android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, ACCESS_NETWORK_STATE
 
 # (list) The Android archs to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
 # In past, was `android.arch` as we weren't supporting builds for multiple archs at the same time.
@@ -359,7 +360,9 @@ android.allow_backup = True
 # (str) extra command line arguments to pass when invoking pythonforandroid.toolchain
 #p4a.extra_args =
 
-
+# Debug/Release Artifacts
+android.debug_artifact = apk
+android.release_artifact = aab
 
 #
 # iOS specific
@@ -405,7 +408,8 @@ ios.codesign.allowed = false
 # (str) URL pointing to a large icon (512x512px) to be used by iTunes
 # This option should be defined along with `app_url` and `display_image_url` options.
 #ios.manifest.full_size_image_url =
-
+# Logcat Filters
+android.logcat_filters = *:S python:D
 
 [buildozer]
 
