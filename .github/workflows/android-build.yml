@@ -77,7 +77,7 @@ jobs:
           rm -rf ~/.buildozer/.cache
 
       - name: Build APK
-        run: buildozer --log-level 2 android debug
+        run: buildozer --log-level=2 android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4.6
