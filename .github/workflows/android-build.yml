@@ -39,11 +39,15 @@ jobs:
           rm -rf /usr/local/lib/android/sdk/ndk/*
           echo "Old NDKs removed."
 
-      - name: Download and extract NDK r25b
+      - name: Download and extract NDK r25b (cached)
         run: |
           wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
           unzip android-ndk-r25b-linux.zip
           mv android-ndk-r25b /home/runner/android-ndk-r25b
+
+      - name: Install Android SDK Build Tools
+        run: |
+          echo "y" | sdkmanager --sdk_root=$ANDROID_SDK_ROOT "build-tools;30.0.3"
 
       - name: Set Buildozer NDK path
         run: |
@@ -58,7 +62,7 @@ jobs:
           buildozer -v android debug
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6
         with:
           name: kivy-apk
           path: bin/*.apk
