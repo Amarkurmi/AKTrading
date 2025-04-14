@@ -53,23 +53,19 @@ jobs:
           unzip commandlinetools-linux-8512546_latest.zip
           rm commandlinetools-linux-8512546_latest.zip
 
-      - name: Install Android SDK components
+      - name: Install Android SDK components (full installation)
         run: |
-          # Install Android SDK components
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "build-tools;30.0.3" "platforms;android-30" "tools"
+          # Install Android SDK components (including build-tools, AIDL, etc.)
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "build-tools;33.0.2" "platforms;android-30" "tools"
 
-      - name: Install AIDL explicitly and check for AIDL presence
+      - name: Verify AIDL Installation
         run: |
-          # Reinstall build-tools and ensure AIDL is present
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "build-tools;30.0.3"
-          echo "Checking if AIDL exists..."
-
-          # Verify the location of AIDL
-          if [ -f "$ANDROID_SDK_ROOT/build-tools/30.0.3/aidl" ]; then
+          # Check if AIDL exists in the build-tools directory
+          if [ -f "$ANDROID_SDK_ROOT/build-tools/33.0.2/aidl" ]; then
             echo "AIDL is correctly installed."
           else
-            echo "AIDL not found in build-tools/30.0.3. Let's list files in that directory."
-            ls -la $ANDROID_SDK_ROOT/build-tools/30.0.3
+            echo "AIDL not found in build-tools/33.0.2. Listing directory contents."
+            ls -la $ANDROID_SDK_ROOT/build-tools/33.0.2
             exit 1
           fi
 
