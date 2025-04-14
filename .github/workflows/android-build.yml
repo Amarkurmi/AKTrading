@@ -92,7 +92,7 @@ jobs:
           
           # Install required SDK components using sdkmanager
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
-            "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+            "platform-tools" "platforms;android-30" "build-tools;30.0.3" "build-tools;36.0.0"
 
           # ✅ Create the necessary directory structure for sdkmanager
           mkdir -p /home/runner/.buildozer/android/platform/android-sdk/tools/bin
@@ -111,7 +111,9 @@ jobs:
           echo "Installing build-tools 30.0.3"
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
 
-          # ✅ Create the symbolic link for AIDL in the expected path
+          # ✅ Install AIDL and ensure it's available in the correct path
+          echo "Installing AIDL"
+          ln -sfn /home/runner/android-sdk/build-tools/30.0.3/aidl /home/runner/.buildozer/android/platform/android-sdk/build-tools/aidl
           ln -sfn /home/runner/android-sdk/build-tools/30.0.3/aidl /home/runner/.buildozer/android/platform/android-sdk/build-tools/aidl
 
       - name: Set Buildozer NDK path
