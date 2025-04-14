@@ -54,11 +54,10 @@ jobs:
           sed -i '/^android.ndk_path/d' buildozer.spec
           echo "android.ndk_path = /home/runner/android-ndk-r25b" >> buildozer.spec
 
-      # ✅ EXTRA STEP: Install SDK command line tools & build-tools
       - name: Install Android SDK Build-tools and AIDL
         run: |
           sudo apt-get update
-          sudo apt-get install -y unzip zip openjdk-17-jdk
+          sudo apt-get install -y unzip zip tar openjdk-17-jdk
 
           mkdir -p $ANDROID_HOME/cmdline-tools
           cd $ANDROID_HOME/cmdline-tools
