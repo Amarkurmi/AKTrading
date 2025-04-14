@@ -46,11 +46,11 @@ jobs:
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "$HOME/android-sdk/build-tools/30.0.3" >> $GITHUB_PATH
 
-      - name: Symlink tools directory for Buildozer compatibility
+      - name: Symlink legacy tools path for Buildozer compatibility
         run: |
           ln -sfn $HOME/android-sdk/cmdline-tools/latest $HOME/android-sdk/tools
 
-      - name: Accept Licenses
+      - name: Accept SDK licenses
         run: yes | sdkmanager --licenses
 
       - name: Install Android SDK packages
@@ -60,7 +60,7 @@ jobs:
             "platforms;android-30" \
             "build-tools;30.0.3"
 
-      - name: Link SDK into Buildozer expected path
+      - name: Link Android SDK to Buildozer expected path
         run: |
           mkdir -p ~/.buildozer/android/platform
           ln -sfn $HOME/android-sdk ~/.buildozer/android/platform/android-sdk
@@ -71,16 +71,20 @@ jobs:
           pip install Cython virtualenv
           pip install buildozer
 
-      - name: Clean previous build cache
+      - name: Clean previous Buildozer data
         run: |
           rm -rf .buildozer
           rm -rf ~/.buildozer/.cache
 
       - name: Build APK
-        run: buildozer android debug
+        run: buildozer --log-level 2 android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4.6
         with:
           name: kivy-apk
           path: bin/*.apk
+
+      - name: Show Buildozer log if build fails
+        if: failure()
+        run: cat .buildozer/android/platform/build-arm64-v8a/build/output.txt || true
