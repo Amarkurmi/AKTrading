@@ -111,17 +111,16 @@ jobs:
           echo "Installing build-tools 30.0.3"
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
 
-          # ✅ Check if AIDL is installed correctly
-          echo "Checking if AIDL exists in build-tools directory"
-          ls /home/runner/android-sdk/build-tools/30.0.3/aidl || echo "AIDL is missing!"
+          # **New Debugging Step:** List build-tools contents to check for AIDL
+          echo "Listing build-tools contents"
+          ls /home/runner/android-sdk/build-tools/30.0.3/
 
-          # ✅ Install AIDL if it's missing
-          echo "Installing AIDL"
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
-          
-          # Ensure the AIDL binary is in the correct location
-          if [ ! -f /home/runner/android-sdk/build-tools/30.0.3/aidl ]; then
-            echo "AIDL binary missing! Attempting to install."
+          # ✅ Check if AIDL is installed in the expected location
+          echo "Checking if AIDL exists in build-tools directory"
+          if [ -f /home/runner/android-sdk/build-tools/30.0.3/aidl ]; then
+            echo "AIDL found!"
+          else
+            echo "AIDL missing. Attempting to reinstall build-tools."
             $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
           fi
 
