@@ -22,43 +22,34 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential \
-            ccache \
-            git \
-            libffi-dev \
-            libssl-dev \
-            libsqlite3-dev \
-            libjpeg-dev \
-            zlib1g-dev \
-            libncurses5-dev \
-            libtool \
-            pkg-config \
-            automake \
-            unzip \
-            zip \
-            openjdk-17-jdk \
-            curl \
-            wget
+            zip unzip openjdk-17-jdk \
+            libffi-dev libssl-dev \
+            libsqlite3-dev libjpeg-dev \
+            zlib1g-dev libncurses5-dev \
+            libtool pkg-config automake \
+            build-essential ccache git \
+            wget curl
 
       - name: Install Android SDK
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
-
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O sdk-tools.zip
-          unzip sdk-tools.zip -d $HOME/android-sdk/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools
           mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
 
+      - name: Set environment variables
+        run: |
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/build-tools/30.0.3" >> $GITHUB_PATH
 
       - name: Accept Licenses
-        run: |
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+        run: yes | sdkmanager --licenses
 
-      - name: Install Required SDK Packages
+      - name: Install specific Android SDK packages
         run: |
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+          sdkmanager \
             "platform-tools" \
             "platforms;android-30" \
             "build-tools;30.0.3"
@@ -69,14 +60,13 @@ jobs:
           pip install Cython virtualenv
           pip install buildozer
 
-      - name: Clean Buildozer Cache
+      - name: Clean any previous build cache
         run: |
           rm -rf .buildozer
           rm -rf ~/.buildozer
 
       - name: Build APK
-        run: |
-          buildozer android debug
+        run: buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4.6
