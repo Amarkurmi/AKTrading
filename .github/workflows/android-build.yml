@@ -89,7 +89,7 @@ jobs:
           # Accept SDK licenses
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           
-          # Install required SDK components
+          # Install required SDK components using cmdline-tools
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" "platforms;android-30" "build-tools;30.0.3"
 
