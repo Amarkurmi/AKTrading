@@ -117,11 +117,11 @@ jobs:
 
           # ✅ Check if AIDL is installed in the expected location
           echo "Checking if AIDL exists in build-tools directory"
-          if [ -f /home/runner/android-sdk/build-tools/30.0.3/aidl ]; then
-            echo "AIDL found!"
-          else
+          if [ ! -f /home/runner/android-sdk/build-tools/30.0.3/aidl ]; then
             echo "AIDL missing. Attempting to reinstall build-tools."
             $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
+          else
+            echo "AIDL found!"
           fi
 
           # ✅ Create the symbolic link for AIDL in the expected path
