@@ -57,11 +57,13 @@ jobs:
         run: |
           yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "build-tools;30.0.3" "platforms;android-30" "tools"
 
-      - name: Verify AIDL Installation
+      - name: Install AIDL and verify
         run: |
-          # Check for AIDL in the build-tools directory
+          # Install AIDL tool explicitly
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "build-tools;30.0.3"
+          # Check if AIDL is installed
           if [ -f "$ANDROID_SDK_ROOT/build-tools/30.0.3/aidl" ]; then
-            echo "AIDL is correctly installed"
+            echo "AIDL is correctly installed."
           else
             echo "AIDL not found. Please check SDK setup."
             exit 1
