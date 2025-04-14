@@ -40,19 +40,17 @@ jobs:
           mkdir -p ~/.buildozer/android/platform
           mv android-ndk-r25b ~/.buildozer/android/platform/
 
-      - name: Install Android command-line tools (flattened for Buildozer)
+      - name: Install Android SDK command-line tools
         run: |
-          mkdir -p ~/.buildozer/android/platform/android-sdk/tools
-          cd ~/.buildozer/android/platform/android-sdk/tools
+          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
+          cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
-          unzip tools.zip
-          rm tools.zip
-          # sdkmanager is now at: ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
-          ls -l bin/sdkmanager || (echo "sdkmanager not found" && exit 1)
+          unzip tools.zip -d latest
+          echo "export PATH=$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
 
       - name: Install required SDK components
         run: |
-          yes | ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --sdk_root=${HOME}/.buildozer/android/platform/android-sdk \
+          sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
             "platform-tools" \
             "build-tools;30.0.3" \
             "platforms;android-30"
