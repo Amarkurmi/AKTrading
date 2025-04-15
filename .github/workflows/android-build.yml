@@ -167,7 +167,19 @@ jobs:
           sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386
           sudo apt-get install -y lib32z1 lib32ncurses6 lib32stdc++6
 
-          # ✅ FIX: Download working AIDL from Build Tools 29.0.2
+          
+      # ✅ Verify AIDL binary and dependencies
+      - name: Verify AIDL binary architecture
+        run: |
+          file /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
+          ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
+
+      - name: Ensure AIDL is executable
+        run: |
+          chmod +x /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
+          ls -l /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
+
+     # ✅ FIX: Download working AIDL from Build Tools 29.0.2
       - name: Replace AIDL with compatible version from Build Tools 29.0.2
         run: |
           echo "Replacing AIDL with known working version from build-tools 29.0.2..."
@@ -181,28 +193,6 @@ jobs:
           rm build-tools.zip
 
 
-      # ✅ Verify AIDL binary and dependencies
-      - name: Verify AIDL binary architecture
-        run: |
-          file /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
-          ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
-
-      - name: Ensure AIDL is executable
-        run: |
-          chmod +x /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
-          ls -l /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
-
-      - name: Replace AIDL with a compatible version from Google
-        run: |
-          echo "Downloading and extracting working AIDL from build-tools 29.0.2..."
-          AIDL_DEST_DIR="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3"
-          mkdir -p "$AIDL_DEST_DIR"
-          wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O build-tools-29.zip
-          unzip -o -j build-tools-29.zip 'android-*/aidl' -d "$AIDL_DEST_DIR"
-          chmod +x "$AIDL_DEST_DIR/aidl"
-          file "$AIDL_DEST_DIR/aidl"
-          ldd "$AIDL_DEST_DIR/aidl" || true
-          rm build-tools-29.zip
           
       - name: Diagnose AIDL binary
         run: |
