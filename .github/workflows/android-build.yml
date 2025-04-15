@@ -180,22 +180,16 @@ jobs:
 
       - name: Replace AIDL with a compatible version from Google
         run: |
-          echo "Downloading and extracting AIDL from build-tools archive..."
+          echo "Downloading and extracting working AIDL from build-tools 29.0.2..."
           AIDL_DEST_DIR="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3"
           mkdir -p "$AIDL_DEST_DIR"
-
-          # Download official build-tools archive
-          wget https://dl.google.com/android/repository/build-tools_r30.0.3-linux.zip -O build-tools.zip
-
-          # Extract only the aidl binary
-          unzip -o -j build-tools.zip 'android-*/aidl' -d "$AIDL_DEST_DIR"
-
-          # Make sure it's executable
+          wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O build-tools-29.zip
+          unzip -o -j build-tools-29.zip 'android-*/aidl' -d "$AIDL_DEST_DIR"
           chmod +x "$AIDL_DEST_DIR/aidl"
-
-          # Clean up
-          rm build-tools.zip
-
+          file "$AIDL_DEST_DIR/aidl"
+          ldd "$AIDL_DEST_DIR/aidl" || true
+          rm build-tools-29.zip
+          
       - name: Diagnose AIDL binary
         run: |
           echo "Checking aidl binary type:"
