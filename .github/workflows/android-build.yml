@@ -75,7 +75,6 @@ jobs:
       - name: Link SDK for Buildozer compatibility
         run: |
           set -ex
-          # Link SDK paths expected by Buildozer
           BUILD_SDK_DIR="/home/runner/.buildozer/android/platform/android-sdk"
           mkdir -p "$BUILD_SDK_DIR/tools/bin"
           ln -sfn /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "$BUILD_SDK_DIR/tools/bin/sdkmanager"
@@ -110,7 +109,6 @@ jobs:
             unzip -o -j build-tools.zip 'android-*/aidl' -d "$(dirname "$AIDL_DEST")"
             chmod +x "$AIDL_DEST"
             rm build-tools.zip
-          fi
 
       - name: Install 32-bit libraries
         run: |
@@ -120,6 +118,11 @@ jobs:
           sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386 \
                                   lib32z1 lib32ncurses6 lib32stdc++6 libgcc-s1:i386 lib32gcc-s1 \
                                   libc6-i386
+
+      - name: Diagnose 32-bit library installation
+        run: |
+          set -ex
+          ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
 
       - name: Diagnose AIDL
         run: |
