@@ -92,24 +92,27 @@ jobs:
       - name: Fix AIDL location with fallback
         run: |
           set -ex
+
           AIDL_SRC="/home/runner/android-sdk/build-tools/30.0.3/aidl"
           AIDL_DEST="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl"
-          mkdir -p "$(dirname "$AIDL_DEST")"
+          AIDL_DIR="$(dirname "$AIDL_DEST")"
+          mkdir -p "$AIDL_DIR"
 
           if [ -f "$AIDL_SRC" ]; then
+            echo "Found AIDL in global SDK. Copying to Buildozer path..."
             cp "$AIDL_SRC" "$AIDL_DEST"
             chmod +x "$AIDL_DEST"
-            echo "Original AIDL copied and made executable"
           fi
 
-          echo "Testing AIDL..."
+          echo "Verifying AIDL executable..."
           if ! "$AIDL_DEST" --help > /dev/null 2>&1; then
-            echo "AIDL not executable. Replacing with fallback..."
+            echo "AIDL is not working. Downloading fallback version..."
             wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O build-tools.zip
-            unzip -o -j build-tools.zip 'android-*/aidl' -d "$(dirname "$AIDL_DEST")"
+            unzip -o -j build-tools.zip 'android-*/aidl' -d "$AIDL_DIR"
             chmod +x "$AIDL_DEST"
             rm build-tools.zip
-            echo "Fallback AIDL installed"
+          else
+            echo "AIDL is working as expected."
           fi
 
       - name: Install 32-bit libraries
