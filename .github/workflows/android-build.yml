@@ -29,24 +29,21 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Python dependencies
+      - name: Install dependencies
         run: |
+          set -ex
           python -m pip install --upgrade pip
           pip install buildozer==1.5.0 cython
 
-      - name: Install 32-bit dependencies
+      - name: Remove incorrect NDK versions
         run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386 \
-            lib32z1 lib32ncurses6 lib32stdc++6 libgcc-s1:i386 lib32gcc-s1 libc6-i386
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get install -y unzip zip tar openjdk-17-jdk wget
+          set -ex
+          rm -rf ~/.buildozer/android/platform/android-ndk-*
+          rm -rf /usr/local/lib/android/sdk/ndk/* || true
 
       - name: Download NDK
         run: |
+          set -ex
           NDK_DIR="/home/runner/.buildozer/android/platform"
           NDK_ZIP="$NDK_DIR/android-ndk-r25b-linux.zip"
           mkdir -p $NDK_DIR
@@ -56,8 +53,12 @@ jobs:
           unzip -q $NDK_ZIP -d $NDK_DIR
           mv $NDK_DIR/android-ndk-r25b $NDK_DIR/../android-ndk-r25b
 
-      - name: Install Android SDK
+      - name: Install Android SDK tools and build-tools
         run: |
+          set -ex
+          sudo apt-get update
+          sudo apt-get install -y unzip zip tar openjdk-17-jdk wget
+
           mkdir -p $ANDROID_HOME/cmdline-tools
           cd $ANDROID_HOME/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
@@ -68,52 +69,70 @@ jobs:
 
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-          # Install Build Tools 30.0.3 (AIDL binary should be present)
-          echo "Installing Build Tools 30.0.3"
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" "platforms;android-30" "build-tools;30.0.3"
 
-      - name: Link SDK for Buildozer
+      - name: Link SDK for Buildozer compatibility
         run: |
-          mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
-          ln -sfn /home/runner/android-sdk ~/.buildozer/android/platform/android-sdk
-          ln -sfn /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+          set -ex
+          # Link SDK paths expected by Buildozer
+          BUILD_SDK_DIR="/home/runner/.buildozer/android/platform/android-sdk"
+          mkdir -p "$BUILD_SDK_DIR/tools/bin"
+          ln -sfn /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "$BUILD_SDK_DIR/tools/bin/sdkmanager"
+          ln -sfn /home/runner/android-sdk "$BUILD_SDK_DIR"
 
-      - name: Set Buildozer spec and NDK path
+      - name: Set Buildozer NDK path
         run: |
+          set -ex
           if [ ! -f buildozer.spec ]; then
             buildozer init
           fi
           sed -i '/^android.ndk_path/d' buildozer.spec
           echo "android.ndk_path = /home/runner/android-ndk-r25b" >> buildozer.spec
 
-      - name: Ensure AIDL Binary Exists and Is Executable
+      - name: Fix AIDL location
         run: |
-          AIDL_BIN="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl"
+          set -ex
+          AIDL_SRC="/home/runner/android-sdk/build-tools/30.0.3/aidl"
+          AIDL_DEST="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl"
+          mkdir -p "$(dirname "$AIDL_DEST")"
 
-          echo "Running aidl version check:"
-
-          # Check if AIDL binary exists
-          if [ ! -f "$AIDL_BIN" ]; then
-            echo "ERROR: AIDL binary is missing! Falling back to older version (30.0.3)."
-            exit 1
-          fi
-
-          # Ensure the AIDL binary is executable
-          chmod +x "$AIDL_BIN"
-          
-          # Verify that AIDL can be executed
-          if ! "$AIDL_BIN" --version; then
-            echo "ERROR: AIDL binary is not executable or fails to run!"
-            exit 1
+          if [ -f "$AIDL_SRC" ]; then
+            if [ ! -f "$AIDL_DEST" ] || ! cmp -s "$AIDL_SRC" "$AIDL_DEST"; then
+              cp "$AIDL_SRC" "$AIDL_DEST"
+              chmod +x "$AIDL_DEST"
+            else
+              echo "AIDL already exists and is identical, skipping copy."
+            fi
           else
-            echo "✅ AIDL binary is executable."
+            echo "AIDL not found, downloading fallback version..."
+            wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O build-tools.zip
+            unzip -o -j build-tools.zip 'android-*/aidl' -d "$(dirname "$AIDL_DEST")"
+            chmod +x "$AIDL_DEST"
+            rm build-tools.zip
           fi
+
+      - name: Install 32-bit libraries
+        run: |
+          set -ex
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386 \
+                                  lib32z1 lib32ncurses6 lib32stdc++6 libgcc-s1:i386 lib32gcc-s1 \
+                                  libc6-i386
+
+      - name: Diagnose AIDL
+        run: |
+          set -ex
+          file /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
+          ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
 
       - name: Build APK
         run: |
+          set -ex
           buildozer -v android debug
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: kivy-apk
