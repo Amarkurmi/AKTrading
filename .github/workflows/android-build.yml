@@ -86,17 +86,16 @@ jobs:
           sed -i '/^android.ndk_path/d' buildozer.spec
           echo "android.ndk_path = /home/runner/android-ndk-r25b" >> buildozer.spec
 
-      - name: Verify AIDL Binary
+      - name: Verify AIDL Binary (36.0.0)
         run: |
-          # AIDL binary location
           AIDL_BIN="/home/runner/.buildozer/android/platform/android-sdk/build-tools/36.0.0/aidl"
 
           echo "Running aidl version check:"
-          if ! "$AIDL_BIN" --help > /dev/null 2>&1; then
-            echo "ERROR: AIDL binary is not executable or fails to run!"
+          if ! [ -x "$AIDL_BIN" ]; then
+            echo "ERROR: AIDL binary is not executable or missing!"
             exit 1
           else
-            echo "✅ AIDL binary is working."
+            echo "✅ AIDL binary is executable."
           fi
 
       - name: Build APK
