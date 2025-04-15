@@ -24,27 +24,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cache Buildozer
-        uses: actions/cache@v3
-        with:
-          path: ~/.buildozer
-          key: ${{ runner.os }}-buildozer-${{ hashFiles('**/buildozer.spec') }}
-          restore-keys: ${{ runner.os }}-buildozer-
-
-      - name: Cache Android SDK
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/android-sdk
-          key: ${{ runner.os }}-android-sdk
-          restore-keys: ${{ runner.os }}-android-sdk
-
-      - name: Cache Android NDK
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/android-ndk-r25b
-          key: ${{ runner.os }}-android-ndk-r25b
-          restore-keys: ${{ runner.os }}-android-ndk
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -62,17 +41,15 @@ jobs:
           rm -rf ~/.buildozer/android/platform/android-ndk-*
           rm -rf /usr/local/lib/android/sdk/ndk/* || true
 
-      - name: Prepare directories and download NDK
+      - name: Download NDK
         run: |
           set -ex
           NDK_DIR="/home/runner/.buildozer/android/platform"
           NDK_ZIP="$NDK_DIR/android-ndk-r25b-linux.zip"
           mkdir -p $NDK_DIR
-          
           if [ ! -f $NDK_ZIP ]; then
             wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O $NDK_ZIP
           fi
-
           unzip -q $NDK_ZIP -d $NDK_DIR
           mv $NDK_DIR/android-ndk-r25b $NDK_DIR/../android-ndk-r25b
 
@@ -83,21 +60,14 @@ jobs:
           sudo apt-get install -y unzip zip tar openjdk-17-jdk wget
           mkdir -p $ANDROID_HOME/cmdline-tools
           cd $ANDROID_HOME/cmdline-tools
-          
           wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
           unzip tools.zip -d temp
-          rm tools.zip
           mkdir -p latest
           mv temp/cmdline-tools/* latest/
-          rm -rf temp
-
+          rm -rf temp tools.zip
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" "platforms;android-30" "build-tools;30.0.3"
-
-          mkdir -p ~/.buildozer/android/platform/
-          ln -sfn /home/runner/android-sdk ~/.buildozer/android/platform/android-sdk
 
       - name: Set Buildozer NDK path
         run: |
@@ -113,23 +83,26 @@ jobs:
           set -ex
           AIDL_SRC="/home/runner/android-sdk/build-tools/30.0.3/aidl"
           AIDL_DEST="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl"
-          mkdir -p $(dirname "$AIDL_DEST")
+          mkdir -p "$(dirname "$AIDL_DEST")"
+
           if [ -f "$AIDL_SRC" ]; then
-            if [ "$AIDL_SRC" != "$AIDL_DEST" ]; then
+            # Only copy if files differ or do not exist
+            if [ ! -f "$AIDL_DEST" ] || ! cmp -s "$AIDL_SRC" "$AIDL_DEST"; then
               cp "$AIDL_SRC" "$AIDL_DEST"
               chmod +x "$AIDL_DEST"
+              echo "AIDL copied and made executable."
             else
-              echo "Source and destination AIDL are the same, skipping copy."
+              echo "AIDL already present and identical, skipping copy."
             fi
           else
-            echo "AIDL not found. Attempting fix..."
+            echo "AIDL not found at $AIDL_SRC, downloading known working version..."
             wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O build-tools.zip
-            unzip -o -j build-tools.zip 'android-*/aidl' -d $(dirname "$AIDL_DEST")
+            unzip -o -j build-tools.zip 'android-*/aidl' -d "$(dirname "$AIDL_DEST")"
             chmod +x "$AIDL_DEST"
             rm build-tools.zip
           fi
 
-      - name: Ensure 32-bit libraries are installed
+      - name: Install 32-bit libraries
         run: |
           set -ex
           sudo dpkg --add-architecture i386
@@ -150,12 +123,7 @@ jobs:
           buildozer -v android debug
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4.6
+        uses: actions/upload-artifact@v4
         with:
           name: kivy-apk
           path: bin/*.apk
-
-      - name: Optional cleanup
-        if: always()
-        run: |
-          rm -rf /home/runner/android-sdk /home/runner/android-ndk-r25b
