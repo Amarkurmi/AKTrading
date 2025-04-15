@@ -68,9 +68,9 @@ jobs:
 
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-          # Install the latest build-tools version (36.0.0 or the latest available)
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
-            "platform-tools" "platforms;android-30" "build-tools;36.0.0"
+          # Install Build Tools 30.0.3 (AIDL binary should be present)
+          echo "Installing Build Tools 30.0.3"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
 
       - name: Link SDK for Buildozer
         run: |
@@ -88,13 +88,13 @@ jobs:
 
       - name: Ensure AIDL Binary Exists and Is Executable
         run: |
-          AIDL_BIN="/home/runner/.buildozer/android/platform/android-sdk/build-tools/36.0.0/aidl"
+          AIDL_BIN="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl"
 
           echo "Running aidl version check:"
-          
+
           # Check if AIDL binary exists
           if [ ! -f "$AIDL_BIN" ]; then
-            echo "ERROR: AIDL binary is missing!"
+            echo "ERROR: AIDL binary is missing! Falling back to older version (30.0.3)."
             exit 1
           fi
 
