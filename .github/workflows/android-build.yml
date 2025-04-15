@@ -58,6 +58,7 @@ jobs:
           set -ex
           sudo apt-get update
           sudo apt-get install -y unzip zip tar openjdk-17-jdk wget
+
           mkdir -p $ANDROID_HOME/cmdline-tools
           cd $ANDROID_HOME/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
@@ -65,9 +66,20 @@ jobs:
           mkdir -p latest
           mv temp/cmdline-tools/* latest/
           rm -rf temp tools.zip
+
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+
+      - name: Link SDK for Buildozer compatibility
+        run: |
+          set -ex
+          # Link SDK paths expected by Buildozer
+          BUILD_SDK_DIR="/home/runner/.buildozer/android/platform/android-sdk"
+          mkdir -p "$BUILD_SDK_DIR/tools/bin"
+          ln -sfn /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "$BUILD_SDK_DIR/tools/bin/sdkmanager"
+          ln -sfn /home/runner/android-sdk "$BUILD_SDK_DIR"
 
       - name: Set Buildozer NDK path
         run: |
@@ -86,16 +98,14 @@ jobs:
           mkdir -p "$(dirname "$AIDL_DEST")"
 
           if [ -f "$AIDL_SRC" ]; then
-            # Only copy if files differ or do not exist
             if [ ! -f "$AIDL_DEST" ] || ! cmp -s "$AIDL_SRC" "$AIDL_DEST"; then
               cp "$AIDL_SRC" "$AIDL_DEST"
               chmod +x "$AIDL_DEST"
-              echo "AIDL copied and made executable."
             else
-              echo "AIDL already present and identical, skipping copy."
+              echo "AIDL already exists and is identical, skipping copy."
             fi
           else
-            echo "AIDL not found at $AIDL_SRC, downloading known working version..."
+            echo "AIDL not found, downloading fallback version..."
             wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O build-tools.zip
             unzip -o -j build-tools.zip 'android-*/aidl' -d "$(dirname "$AIDL_DEST")"
             chmod +x "$AIDL_DEST"
