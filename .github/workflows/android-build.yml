@@ -147,13 +147,28 @@ jobs:
             libpulse0:i386 \
             libxinerama1:i386
 
-      - name: Diagnose AIDL
+      - name: Diagnose and patch aidl execution
         run: |
           set -ex
           AIDL_BIN="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl"
+          echo "Running file check on AIDL..."
           file "$AIDL_BIN"
-          ldd "$AIDL_BIN" || true
-          "$AIDL_BIN" --help || echo "AIDL still failed to run"
+
+          echo "Checking for missing dependencies..."
+          ldd "$AIDL_BIN" || echo "ldd check failed, likely missing libs"
+
+          echo "Testing AIDL execution..."
+          if ! "$AIDL_BIN" --help > /dev/null 2>&1; then
+            echo "AIDL failed — retrying with LD_LIBRARY_PATH..."
+            export LD_LIBRARY_PATH="/lib/i386-linux-gnu:/usr/lib/i386-linux-gnu:$LD_LIBRARY_PATH"
+            echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+            "$AIDL_BIN" --help || {
+              echo "Even with LD_LIBRARY_PATH, AIDL fails"
+              exit 1
+            }
+          else
+            echo "AIDL executed correctly"
+          fi
 
       - name: Build APK
         run: |
