@@ -29,25 +29,23 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install buildozer==1.5.0 cython
 
-      - name: Install required 32-bit libraries
+      - name: Install 32-bit dependencies
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
           sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386 \
-                                  lib32z1 lib32ncurses6 lib32stdc++6 libgcc-s1:i386 lib32gcc-s1 \
-                                  libc6-i386
+            lib32z1 lib32ncurses6 lib32stdc++6 libgcc-s1:i386 lib32gcc-s1 libc6-i386
 
-      - name: Remove old NDK versions
+      - name: Install system dependencies
         run: |
-          rm -rf ~/.buildozer/android/platform/android-ndk-*
-          rm -rf /usr/local/lib/android/sdk/ndk/* || true
+          sudo apt-get install -y unzip zip tar openjdk-17-jdk wget
 
-      - name: Download Android NDK
+      - name: Download NDK
         run: |
           NDK_DIR="/home/runner/.buildozer/android/platform"
           NDK_ZIP="$NDK_DIR/android-ndk-r25b-linux.zip"
@@ -58,9 +56,8 @@ jobs:
           unzip -q $NDK_ZIP -d $NDK_DIR
           mv $NDK_DIR/android-ndk-r25b $NDK_DIR/../android-ndk-r25b
 
-      - name: Install Android SDK and Build Tools
+      - name: Install Android SDK
         run: |
-          sudo apt-get install -y unzip zip tar openjdk-17-jdk wget
           mkdir -p $ANDROID_HOME/cmdline-tools
           cd $ANDROID_HOME/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
@@ -74,14 +71,13 @@ jobs:
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" "platforms;android-30" "build-tools;30.0.3"
 
-      - name: Link SDK paths for Buildozer
+      - name: Link SDK for Buildozer
         run: |
-          BUILD_SDK_DIR="/home/runner/.buildozer/android/platform/android-sdk"
-          mkdir -p "$BUILD_SDK_DIR/tools/bin"
-          ln -sfn /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "$BUILD_SDK_DIR/tools/bin/sdkmanager"
-          ln -sfn /home/runner/android-sdk "$BUILD_SDK_DIR"
+          mkdir -p ~/.buildozer/android/platform/
+          ln -sfn /home/runner/android-sdk ~/.buildozer/android/platform/android-sdk
+          ln -sfn /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
 
-      - name: Set Buildozer NDK path
+      - name: Set Buildozer spec and NDK path
         run: |
           if [ ! -f buildozer.spec ]; then
             buildozer init
@@ -89,21 +85,27 @@ jobs:
           sed -i '/^android.ndk_path/d' buildozer.spec
           echo "android.ndk_path = /home/runner/android-ndk-r25b" >> buildozer.spec
 
-      - name: Replace AIDL with working version (29.0.2)
+      - name: Replace AIDL with known working version
         run: |
           AIDL_DEST="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl"
-          mkdir -p "$(dirname "$AIDL_DEST")"
-          wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O build-tools.zip
-          unzip -o -j build-tools.zip 'android-*/aidl' -d "$(dirname "$AIDL_DEST")"
-          chmod +x "$AIDL_DEST"
-          rm build-tools.zip
+          mkdir -p "$(dirname $AIDL_DEST)"
+          wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O aidl.zip
+          unzip -o -j aidl.zip 'android-*/aidl' -d "$(dirname $AIDL_DEST)"
+          chmod +x $AIDL_DEST
+          rm aidl.zip
 
-      - name: Verify AIDL executable and dependencies
+      - name: Verify AIDL works
         run: |
-          file /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
-          ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
+          AIDL_BIN="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl"
+          echo "Running aidl version check:"
+          if ! "$AIDL_BIN" --help > /dev/null 2>&1; then
+            echo "ERROR: AIDL binary is not executable or fails to run!"
+            exit 1
+          else
+            echo "✅ AIDL binary is working."
+          fi
 
-      - name: Build APK with Buildozer
+      - name: Build APK
         run: |
           buildozer -v android debug
 
