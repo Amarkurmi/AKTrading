@@ -64,33 +64,43 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y unzip zip tar openjdk-17-jdk wget
+
           mkdir -p $ANDROID_HOME/cmdline-tools
           cd $ANDROID_HOME/cmdline-tools
+
           wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
           unzip tools.zip -d temp
           rm tools.zip
           mkdir -p latest
           mv temp/cmdline-tools/* latest/
           rm -rf temp
+
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" "platforms;android-30" "build-tools;30.0.3" "build-tools;36.0.0"
+
           mkdir -p /home/runner/.buildozer/android/platform/android-sdk/tools/bin
           ln -sfn /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
           mkdir -p ~/.buildozer/android/platform/
           ln -sfn /home/runner/android-sdk ~/.buildozer/android/platform/android-sdk
+
           mkdir -p /home/runner/.buildozer/android/platform/android-sdk/build-tools
+
           echo "Installing build-tools 30.0.3"
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
+
           echo "Listing build-tools contents"
           ls /home/runner/android-sdk/build-tools/30.0.3/
+
           echo "Checking if AIDL exists in build-tools directory"
-          if [ -f /home/runner/android-sdk/build-tools/30.0.3/aidl ]; then
-            echo "AIDL found!"
+          AIDL_PATH="/home/runner/android-sdk/build-tools/30.0.3/aidl"
+          if [ -f "$AIDL_PATH" ]; then
+            echo "✅ AIDL found at $AIDL_PATH"
           else
-            echo "AIDL missing. Attempting to reinstall build-tools."
-            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
+            echo "⚠️ AIDL not found. Proceeding to manual replacement step."
+          fi
 
       - name: Set Buildozer NDK path
         run: |
@@ -106,24 +116,26 @@ jobs:
           AIDL_SRC="/home/runner/android-sdk/build-tools/30.0.3/aidl"
           AIDL_DEST_DIR="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3"
           AIDL_DEST="$AIDL_DEST_DIR/aidl"
+          
           mkdir -p "$AIDL_DEST_DIR"
+          
           if [ -f "$AIDL_SRC" ]; then
             echo "AIDL found at $AIDL_SRC, copying to $AIDL_DEST"
             cp "$AIDL_SRC" "$AIDL_DEST"
             chmod +x "$AIDL_DEST"
           else
-            echo "AIDL not found at $AIDL_SRC. Failing build."
-            exit 1
+            echo "AIDL not found at $AIDL_SRC. Skipping direct copy and continuing to manual replacement."
           fi
 
       - name: Install 32-bit libraries for AIDL
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install -y libc6:i386 libncurses5:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386
+          sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386
 
       - name: Replace AIDL with a compatible version
         run: |
+          echo "Replacing AIDL with verified binary..."
           AIDL_DEST_DIR="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3"
           mkdir -p "$AIDL_DEST_DIR"
           wget https://dl.google.com/android/repository/build-tools_r30.0.3-linux.zip -O build-tools.zip
@@ -134,9 +146,10 @@ jobs:
         run: |
           echo "Checking aidl binary type:"
           file /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
+
           echo "Checking aidl dependencies:"
           ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
-
+          
       - name: Build APK
         run: |
           buildozer -v android debug
