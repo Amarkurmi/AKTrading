@@ -73,7 +73,7 @@ jobs:
 
       - name: Link SDK for Buildozer
         run: |
-          mkdir -p ~/.buildozer/android/platform/
+          mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
           ln -sfn /home/runner/android-sdk ~/.buildozer/android/platform/android-sdk
           ln -sfn /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
 
