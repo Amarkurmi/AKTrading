@@ -157,14 +157,26 @@ jobs:
           sudo dpkg --add-architecture i386
           sudo apt-get update
           sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386
+          sudo apt-get install -y lib32z1 lib32ncurses6 lib32stdc++6
 
-      # ✅ Verify 32-bit libraries
-      - name: Verify 32-bit libraries
+      - name: Reinstall 32-bit libraries for AIDL
         run: |
-          dpkg --print-architecture
-          dpkg --list | grep i386
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386
+          sudo apt-get install -y lib32z1 lib32ncurses6 lib32stdc++6
 
-      # ✅ Download and override AIDL manually
+      # ✅ Verify AIDL binary and dependencies
+      - name: Verify AIDL binary architecture
+        run: |
+          file /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
+          ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
+
+      - name: Ensure AIDL is executable
+        run: |
+          chmod +x /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
+          ls -l /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
+
       - name: Replace AIDL with a compatible version from Google
         run: |
           echo "Downloading and extracting AIDL from build-tools archive..."
@@ -182,16 +194,6 @@ jobs:
 
           # Clean up
           rm build-tools.zip
-
-      # ✅ Check aidl binary type
-      - name: Check aidl binary type
-        run: |
-          file /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
-
-      # ✅ Check aidl dependencies
-      - name: Check aidl dependencies
-        run: |
-          ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
 
       - name: Diagnose AIDL binary
         run: |
