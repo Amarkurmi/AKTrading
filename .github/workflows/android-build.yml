@@ -89,7 +89,7 @@ jobs:
           sed -i '/^android.ndk_path/d' buildozer.spec
           echo "android.ndk_path = /home/runner/android-ndk-r25b" >> buildozer.spec
 
-      - name: Fix AIDL location
+      - name: Fix AIDL location with fallback
         run: |
           set -ex
           AIDL_SRC="/home/runner/android-sdk/build-tools/30.0.3/aidl"
@@ -97,38 +97,38 @@ jobs:
           mkdir -p "$(dirname "$AIDL_DEST")"
 
           if [ -f "$AIDL_SRC" ]; then
-            if [ ! -f "$AIDL_DEST" ] || ! cmp -s "$AIDL_SRC" "$AIDL_DEST"; then
-              cp "$AIDL_SRC" "$AIDL_DEST"
-              chmod +x "$AIDL_DEST"
-            else
-              echo "AIDL already exists and is identical, skipping copy."
-            fi
-          else
-            echo "AIDL not found, downloading fallback version..."
+            cp "$AIDL_SRC" "$AIDL_DEST"
+            chmod +x "$AIDL_DEST"
+            echo "Original AIDL copied and made executable"
+          fi
+
+          echo "Testing AIDL..."
+          if ! "$AIDL_DEST" --help > /dev/null 2>&1; then
+            echo "AIDL not executable. Replacing with fallback..."
             wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O build-tools.zip
             unzip -o -j build-tools.zip 'android-*/aidl' -d "$(dirname "$AIDL_DEST")"
             chmod +x "$AIDL_DEST"
             rm build-tools.zip
+            echo "Fallback AIDL installed"
+          fi
 
       - name: Install 32-bit libraries
         run: |
           set -ex
           sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386 \
-                                  lib32z1 lib32ncurses6 lib32stdc++6 libgcc-s1:i386 lib32gcc-s1 \
-                                  libc6-i386
-
-      - name: Diagnose 32-bit library installation
-        run: |
-          set -ex
-          ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
+          sudo apt-get install -y \
+            libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386 \
+            lib32z1 lib32ncurses6 lib32stdc++6 libgcc-s1:i386 lib32gcc-s1 \
+            libc6-i386 libx11-6:i386 libxext6:i386 libxrender1:i386
 
       - name: Diagnose AIDL
         run: |
           set -ex
-          file /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
-          ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
+          AIDL_BIN="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl"
+          file "$AIDL_BIN"
+          ldd "$AIDL_BIN" || true
+          "$AIDL_BIN" --help || echo "AIDL still failed to run"
 
       - name: Build APK
         run: |
