@@ -68,8 +68,9 @@ jobs:
 
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
+          # Install the latest build-tools version (36.0.0 or the latest available)
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
-            "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+            "platform-tools" "platforms;android-30" "build-tools;36.0.0"
 
       - name: Link SDK for Buildozer
         run: |
@@ -85,18 +86,11 @@ jobs:
           sed -i '/^android.ndk_path/d' buildozer.spec
           echo "android.ndk_path = /home/runner/android-ndk-r25b" >> buildozer.spec
 
-      - name: Replace AIDL with known working version
+      - name: Verify AIDL Binary
         run: |
-          AIDL_DEST="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl"
-          mkdir -p "$(dirname $AIDL_DEST)"
-          wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O aidl.zip
-          unzip -o -j aidl.zip 'android-*/aidl' -d "$(dirname $AIDL_DEST)"
-          chmod +x $AIDL_DEST  # Ensure AIDL is executable
-          rm aidl.zip
+          # AIDL binary location
+          AIDL_BIN="/home/runner/.buildozer/android/platform/android-sdk/build-tools/36.0.0/aidl"
 
-      - name: Verify AIDL works
-        run: |
-          AIDL_BIN="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl"
           echo "Running aidl version check:"
           if ! "$AIDL_BIN" --help > /dev/null 2>&1; then
             echo "ERROR: AIDL binary is not executable or fails to run!"
