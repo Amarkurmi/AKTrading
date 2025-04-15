@@ -1,4 +1,3 @@
-
 name: Build APK
 
 on:
@@ -43,12 +42,10 @@ jobs:
 
       - name: Prepare directories and download NDK
         run: |
-          # Ensure the NDK directory exists
           NDK_DIR="/home/runner/.buildozer/android/platform"
           NDK_ZIP="$NDK_DIR/android-ndk-r25b-linux.zip"
           mkdir -p $NDK_DIR
           
-          # Check if NDK zip file exists, if not download it
           if [ ! -f $NDK_ZIP ]; then
             echo "NDK zip not found. Downloading..."
             wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O $NDK_ZIP
@@ -56,7 +53,6 @@ jobs:
             echo "NDK zip already exists, skipping download."
           fi
 
-          # Ensure the NDK zip file is present before attempting to unzip
           if [ -f $NDK_ZIP ]; then
             echo "NDK archive found, extracting..."
             unzip -q $NDK_ZIP -d $NDK_DIR
@@ -65,7 +61,6 @@ jobs:
             exit 1
           fi
 
-          # Move the NDK to the correct location
           mv $NDK_DIR/android-ndk-r25b $NDK_DIR/../android-ndk-r25b
           
       - name: Install Android SDK tools and build-tools
@@ -73,11 +68,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y unzip zip tar openjdk-17-jdk wget
 
-          # Create the necessary directories for the SDK
           mkdir -p $ANDROID_HOME/cmdline-tools
           cd $ANDROID_HOME/cmdline-tools
           
-          # Download the command-line tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
           unzip tools.zip -d temp
           rm tools.zip
@@ -85,38 +78,22 @@ jobs:
           mv temp/cmdline-tools/* latest/
           rm -rf temp
 
-          # Make sure the cmdline-tools are in the PATH
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
 
-          # Accept SDK licenses
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           
-          # Install required SDK components using sdkmanager
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" "platforms;android-30" "build-tools;30.0.3" "build-tools;36.0.0"
 
-          # ✅ Create the necessary directory structure for sdkmanager
           mkdir -p /home/runner/.buildozer/android/platform/android-sdk/tools/bin
-
-          # ✅ Create symlink to make sdkmanager accessible in the old path
           ln -sfn /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
-
-          # ✅ Symlink SDK to where Buildozer expects it
           mkdir -p ~/.buildozer/android/platform/
           ln -sfn /home/runner/android-sdk ~/.buildozer/android/platform/android-sdk
-
-          # Ensure build-tools directory exists
           mkdir -p /home/runner/.buildozer/android/platform/android-sdk/build-tools
-
-          # ✅ Install the required build-tools version
           echo "Installing build-tools 30.0.3"
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
-
-          # **New Debugging Step:** List build-tools contents to check for AIDL
           echo "Listing build-tools contents"
           ls /home/runner/android-sdk/build-tools/30.0.3/
-
-          # ✅ Check if AIDL is installed in the expected location
           echo "Checking if AIDL exists in build-tools directory"
           if [ -f /home/runner/android-sdk/build-tools/30.0.3/aidl ]; then
             echo "AIDL found!"
@@ -133,7 +110,6 @@ jobs:
           sed -i '/^android.ndk_path/d' buildozer.spec
           echo "android.ndk_path = /home/runner/android-ndk-r25b" >> buildozer.spec
 
-      # ✅ Fix AIDL location for Buildozer
       - name: Fix AIDL location for Buildozer
         run: |
           echo "Fixing AIDL location for Buildozer..."
@@ -151,8 +127,7 @@ jobs:
             echo "AIDL not found at $AIDL_SRC. Failing build."
             exit 1
           fi
-          
-      # ✅ Install 32-bit libraries for AIDL
+
       - name: Install 32-bit libraries for AIDL
         run: |
           sudo dpkg --add-architecture i386
@@ -167,8 +142,6 @@ jobs:
           sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386
           sudo apt-get install -y lib32z1 lib32ncurses6 lib32stdc++6
 
-          
-      # ✅ Verify AIDL binary and dependencies
       - name: Verify AIDL binary architecture
         run: |
           file /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
@@ -179,21 +152,22 @@ jobs:
           chmod +x /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
           ls -l /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
 
-     # ✅ FIX: Download working AIDL from Build Tools 29.0.2
       - name: Replace AIDL with compatible version from Build Tools 29.0.2
         run: |
           echo "Replacing AIDL with known working version from build-tools 29.0.2..."
           AIDL_DEST_DIR="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3"
           mkdir -p "$AIDL_DEST_DIR"
           wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O build-tools.zip
-          unzip -o -j build-tools.zip 'android-*/aidl' -d "$AIDL_DEST_DIR"
+
+          unzip -j build-tools.zip 'android-*/aidl' -d "$AIDL_DEST_DIR" || \
+          unzip -j build-tools.zip 'build-tools/29.0.2/aidl' -d "$AIDL_DEST_DIR" || \
+          unzip -j build-tools.zip '**/aidl' -d "$AIDL_DEST_DIR"
+
           chmod +x "$AIDL_DEST_DIR/aidl"
           file "$AIDL_DEST_DIR/aidl"
           ldd "$AIDL_DEST_DIR/aidl" || true
           rm build-tools.zip
 
-
-          
       - name: Diagnose AIDL binary
         run: |
           echo "Checking aidl binary type:"
