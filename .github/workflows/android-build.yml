@@ -195,6 +195,33 @@ jobs:
           # Clean up
           rm build-tools.zip
 
+      - name: Fallback: Replace with known working AIDL (build-tools 29.0.2)
+        run: |
+          echo "Attempting fallback AIDL from build-tools 29.0.2"
+          AIDL_DEST_DIR="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3"
+          mkdir -p "$AIDL_DEST_DIR"
+
+          # Download build-tools 29.0.2
+          wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O build-tools-29.zip
+
+          # Extract only aidl from build-tools 29
+          unzip -o -j build-tools-29.zip 'android-*/aidl' -d "$AIDL_DEST_DIR"
+
+          # Make it executable
+          chmod +x "$AIDL_DEST_DIR/aidl"
+
+          # Clean up
+          rm build-tools-29.zip
+
+      - name: Final verify AIDL binary
+        run: |
+          echo "Final check for aidl binary:"
+          file /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
+          ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
+          chmod +x /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
+          ls -la /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
+
+
       - name: Diagnose AIDL binary
         run: |
           echo "Checking aidl binary type:"
