@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Environment variables for Android SDK and NDK paths
       ANDROID_NDK: /home/runner/android-ndk-r25b
       ANDROID_NDK_HOME: /home/runner/android-ndk-r25b
       ANDROID_NDK_ROOT: /home/runner/android-ndk-r25b
@@ -25,6 +24,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Cache Buildozer
+        uses: actions/cache@v3
+        with:
+          path: ~/.buildozer
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('**/buildozer.spec') }}
+          restore-keys: ${{ runner.os }}-buildozer-
+
+      - name: Cache Android SDK
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/android-sdk
+          key: ${{ runner.os }}-android-sdk
+          restore-keys: ${{ runner.os }}-android-sdk
+
+      - name: Cache Android NDK
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/android-ndk-r25b
+          key: ${{ runner.os }}-android-ndk-r25b
+          restore-keys: ${{ runner.os }}-android-ndk
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -32,43 +52,35 @@ jobs:
 
       - name: Install dependencies
         run: |
+          set -ex
           python -m pip install --upgrade pip
-          pip install buildozer cython
+          pip install buildozer==1.5.0 cython
 
       - name: Remove incorrect NDK versions
         run: |
+          set -ex
           rm -rf ~/.buildozer/android/platform/android-ndk-*
-          rm -rf /usr/local/lib/android/sdk/ndk/*
-          echo "Old NDKs removed."
+          rm -rf /usr/local/lib/android/sdk/ndk/* || true
 
       - name: Prepare directories and download NDK
         run: |
+          set -ex
           NDK_DIR="/home/runner/.buildozer/android/platform"
           NDK_ZIP="$NDK_DIR/android-ndk-r25b-linux.zip"
           mkdir -p $NDK_DIR
           
           if [ ! -f $NDK_ZIP ]; then
-            echo "NDK zip not found. Downloading..."
             wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O $NDK_ZIP
-          else
-            echo "NDK zip already exists, skipping download."
           fi
 
-          if [ -f $NDK_ZIP ]; then
-            echo "NDK archive found, extracting..."
-            unzip -q $NDK_ZIP -d $NDK_DIR
-          else
-            echo "NDK archive not found. Exiting..."
-            exit 1
-          fi
-
+          unzip -q $NDK_ZIP -d $NDK_DIR
           mv $NDK_DIR/android-ndk-r25b $NDK_DIR/../android-ndk-r25b
-          
+
       - name: Install Android SDK tools and build-tools
         run: |
+          set -ex
           sudo apt-get update
           sudo apt-get install -y unzip zip tar openjdk-17-jdk wget
-
           mkdir -p $ANDROID_HOME/cmdline-tools
           cd $ANDROID_HOME/cmdline-tools
           
@@ -79,99 +91,58 @@ jobs:
           mv temp/cmdline-tools/* latest/
           rm -rf temp
 
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
-            "platform-tools" "platforms;android-30" "build-tools;30.0.3" "build-tools;36.0.0"
 
-          mkdir -p /home/runner/.buildozer/android/platform/android-sdk/tools/bin
-          ln -sfn /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+
           mkdir -p ~/.buildozer/android/platform/
           ln -sfn /home/runner/android-sdk ~/.buildozer/android/platform/android-sdk
-          mkdir -p /home/runner/.buildozer/android/platform/android-sdk/build-tools
-          echo "Installing build-tools 30.0.3"
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
-          echo "Listing build-tools contents"
-          ls /home/runner/android-sdk/build-tools/30.0.3/
-          echo "Checking if AIDL exists in build-tools directory"
-          if [ -f /home/runner/android-sdk/build-tools/30.0.3/aidl ]; then
-            echo "AIDL found!"
-          else
-            echo "AIDL missing. Attempting to reinstall build-tools."
-            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
-          fi
 
       - name: Set Buildozer NDK path
         run: |
+          set -ex
           if [ ! -f buildozer.spec ]; then
             buildozer init
           fi
           sed -i '/^android.ndk_path/d' buildozer.spec
           echo "android.ndk_path = /home/runner/android-ndk-r25b" >> buildozer.spec
 
-      - name: Fix AIDL location for Buildozer
+      - name: Fix AIDL location
         run: |
-          echo "Fixing AIDL location for Buildozer..."
+          set -ex
           AIDL_SRC="/home/runner/android-sdk/build-tools/30.0.3/aidl"
-          AIDL_DEST_DIR="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3"
-          AIDL_DEST="$AIDL_DEST_DIR/aidl"
-          
-          mkdir -p "$AIDL_DEST_DIR"
-          
+          AIDL_DEST="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl"
+          mkdir -p $(dirname "$AIDL_DEST")
           if [ -f "$AIDL_SRC" ]; then
-            echo "AIDL found at $AIDL_SRC, copying to $AIDL_DEST"
             cp "$AIDL_SRC" "$AIDL_DEST"
             chmod +x "$AIDL_DEST"
           else
-            echo "AIDL not found at $AIDL_SRC. Failing build."
-            exit 1
+            echo "AIDL not found. Attempting fix..."
+            wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O build-tools.zip
+            unzip -o -j build-tools.zip 'android-*/aidl' -d $(dirname "$AIDL_DEST")
+            chmod +x "$AIDL_DEST"
+            rm build-tools.zip
           fi
-          
-      
 
       - name: Ensure 32-bit libraries are installed
         run: |
+          set -ex
           sudo dpkg --add-architecture i386
           sudo apt-get update
           sudo apt-get install -y libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386 \
-                            lib32z1 lib32ncurses6 lib32stdc++6 libgcc-s1:i386 lib32gcc-s1 \
-                            libc6-i386
+                                  lib32z1 lib32ncurses6 lib32stdc++6 libgcc-s1:i386 lib32gcc-s1 \
+                                  libc6-i386
 
-
-      - name: Verify AIDL binary architecture
+      - name: Diagnose AIDL
         run: |
+          set -ex
           file /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
-          ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
-
-      - name: Ensure AIDL is executable
-        run: |
-          chmod +x /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
-          ls -l /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl
-
-      - name: Replace AIDL with compatible version from Build Tools 29.0.2
-        run: |
-          echo "Replacing AIDL with known working version from build-tools 29.0.2..."
-          AIDL_DEST_DIR="/home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3"
-          mkdir -p "$AIDL_DEST_DIR"
-          wget https://dl.google.com/android/repository/build-tools_r29.0.2-linux.zip -O build-tools.zip
-          unzip -o -j build-tools.zip 'android-*/aidl' -d "$AIDL_DEST_DIR"
-          chmod +x "$AIDL_DEST_DIR/aidl"
-          file "$AIDL_DEST_DIR/aidl"
-          ldd "$AIDL_DEST_DIR/aidl" || true
-          rm build-tools.zip
-
-      - name: Diagnose AIDL binary
-        run: |
-          echo "Checking aidl binary type:"
-          file /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
-
-          echo "Checking aidl dependencies:"
           ldd /home/runner/.buildozer/android/platform/android-sdk/build-tools/30.0.3/aidl || true
 
       - name: Build APK
         run: |
+          set -ex
           buildozer -v android debug
 
       - name: Upload APK artifact
@@ -179,3 +150,8 @@ jobs:
         with:
           name: kivy-apk
           path: bin/*.apk
+
+      - name: Optional cleanup
+        if: always()
+        run: |
+          rm -rf /home/runner/android-sdk /home/runner/android-ndk-r25b
